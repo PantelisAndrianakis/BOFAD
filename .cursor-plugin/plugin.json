@@ -1,0 +1,13 @@
+{
+	"name": "bofad",
+	"displayName": "BOFAD",
+	"description": "BOFAD - Benevolent Operator From Another Dimension. Coding style and thinking discipline for AI coding agents.",
+	"version": "1.0.0",
+	"author": {
+		"name": "Pantelis Andrianakis"
+	},
+	"homepage": "https://github.com/MobiusDevelopment/bofad",
+	"license": "MIT",
+	"keywords": ["skills", "coding-style", "review", "planning", "discipline"],
+	"skills": "./skills/"
+}

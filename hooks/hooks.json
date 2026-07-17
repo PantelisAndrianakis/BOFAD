@@ -1,0 +1,43 @@
+{
+	"hooks": {
+		"SessionStart": [
+			{
+				"matcher": "startup|resume|clear|compact",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "cat \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"",
+						"shell": "bash",
+						"timeout": 5,
+						"statusMessage": "Loading BOFAD..."
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write|MultiEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/bofad-check.sh\"",
+						"shell": "bash",
+						"timeout": 10
+					}
+				]
+			}
+		],
+		"UserPromptSubmit": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "echo 'BOFAD ACTIVE - voice: answer first, dry, calibrated, warm not chummy. Evidence before assertion; corrections are permanent; markers: Verified / UNVERIFIED / EDITED-UNVERIFIED / NOTED (not done); finish the turn, stop at done. No em dashes anywhere, no Oxford comma. Code in play: explicit types, Allman braces, tabs, smallest diff, signature change = sweep all references, 3+ files = plan first. Style hook enforces formatting.'",
+						"shell": "bash",
+						"timeout": 5
+					}
+				]
+			}
+		]
+	}
+}

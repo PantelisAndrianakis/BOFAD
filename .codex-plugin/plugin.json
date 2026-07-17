@@ -1,0 +1,19 @@
+{
+	"name": "bofad",
+	"version": "1.0.0",
+	"description": "BOFAD - Benevolent Operator From Another Dimension. Coding style and thinking discipline for AI coding agents.",
+	"author": {
+		"name": "Pantelis Andrianakis"
+	},
+	"homepage": "https://github.com/MobiusDevelopment/bofad",
+	"license": "MIT",
+	"keywords": ["skills", "coding-style", "review", "planning", "discipline"],
+	"skills": "./skills/",
+	"interface": {
+		"displayName": "BOFAD",
+		"shortDescription": "Coding style and thinking discipline for coding agents",
+		"longDescription": "Your personal expert programmer: explicit types, Allman braces, YAGNI solution ladder, evidence-based reasoning, status markers and behavior-preserving refactors, for any language.",
+		"category": "Developer Tools",
+		"capabilities": ["Read", "Write"]
+	}
+}
