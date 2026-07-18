@@ -39,6 +39,8 @@ A `Stop` hook runs `hooks/bofad-final-check.sh` on each turn's final message: a 
 
 The plugin also ships three subagents: `bofad-wargame` refutes implementation plans before code is written; `bofad-voice-check` grades a reply against a probe rubric from `tests/voice/probes.md`; `bofad-code-check` grades finished code against the semantic rules the checker script cannot see (Solution ladder, Performance habits, switch shape), validated against `tests/samples/SemanticBad.java` and `SemanticGood.java`. The `/bofad-review` command runs both review layers on demand, the checker script then the code-check agent, over given paths or the uncommitted changes; findings only, fixes wait to be asked for.
 
+`tests/exam.sh` is the successor exam: after a host swap, one headless run grades whatever model now carries the rules against the semantic fixtures and a voice probe, grep-scored, and answers whether the rules still hold. The runner is host-neutral: `BOFAD_ASK` names any command that reads a prompt on stdin and prints the reply.
+
 ### Enforcement for every other tool (git pre-commit)
 
 Only Claude Code runs the check in-session. Every other agent gets the same enforcement at commit time instead - the checker is plain POSIX sh and git runs it no matter which tool edited the code:
