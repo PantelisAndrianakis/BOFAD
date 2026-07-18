@@ -41,8 +41,8 @@ K&R BRACE (Allman required, opening brace on its own line):
 $hits"
 	fi
 
-	# Missing space after comment marker.
-	hits=$(grep -nE '//[^ /!-]' "$f" | grep -vE '://' | filter_hits | head -n 3)
+	# Missing space after comment marker; URL schemes are masked first so an address on the line no longer exempts the whole line.
+	hits=$(grep -n '.' "$f" | sed 's|[A-Za-z][A-Za-z0-9+.-]*://|__SCHEME__|g' | grep -E '//[^ /!-]' | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out
@@ -50,8 +50,8 @@ COMMENT SPACING (space required after //):
 $hits"
 	fi
 
-	# Local type inference forbidden.
-	hits=$(grep -nE '(^|[^A-Za-z0-9_.])var[[:space:]]+[A-Za-z_]' "$f" | filter_hits | head -n 3)
+	# Local type inference forbidden; line comments and doc continuation lines are stripped first so prose mentioning the keyword stays legal, string literals still flag - accepted ceiling.
+	hits=$(grep -n '.' "$f" | sed 's|//.*||' | grep -vE '^[0-9]+:[[:space:]]*(\*|/\*)' | grep -E '(^|[^A-Za-z0-9_.])var[[:space:]]+[A-Za-z_]' | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out

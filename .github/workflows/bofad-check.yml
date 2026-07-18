@@ -1,10 +1,12 @@
 name: BOFAD self-check
 on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Checker passes clean samples
         run: sh hooks/bofad-check.sh tests/samples/Good.java tests/samples/Good.md
       - name: Checker flags dirty samples
@@ -17,5 +19,10 @@ jobs:
           for rule in 'EM/EN DASH' 'CONSECUTIVE BLANK LINES'; do
             printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on Bad.md: $rule"; exit 1; }
           done
+      - name: Line scoping honors BOFAD_CHANGED
+        run: |
+          if out=$(BOFAD_CHANGED="3" sh hooks/bofad-check.sh tests/samples/Bad.java); then echo "Scoped run passed - line 3 violation missed"; exit 1; fi
+          printf '%s' "$out" | grep -qF 'TYPE INFERENCE' || { echo "TYPE INFERENCE not reported for scoped line 3"; exit 1; }
+          if printf '%s' "$out" | grep -qF 'FUNCTIONAL CHAIN'; then echo "Out-of-scope FUNCTIONAL CHAIN reported"; exit 1; fi
       - name: Ruleset obeys its own prose rules
-        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md
+        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md

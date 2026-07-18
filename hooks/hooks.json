@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "cat \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"",
+						"command": "if [ -n \"$BOFAD_LITE\" ]; then awk '/^## Voice examples/{skip=1} /^## Research/{skip=0} !skip' \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"; else cat \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"; fi",
 						"shell": "bash",
 						"timeout": 5,
 						"statusMessage": "Loading BOFAD..."
