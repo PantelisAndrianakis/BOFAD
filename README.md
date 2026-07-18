@@ -14,7 +14,9 @@ It replaces judgment with checkable procedure:
 - **Reasoning discipline** - evidence before assertion, self-refutation before presenting, smallest diff, reference sweeps, status markers (`Verified:`, `UNVERIFIED`, `EDITED-UNVERIFIED`, `NOTED (not done)`) instead of hedge words.
 - **Planning** - numeric triggers for when to plan, clarify-then-brainstorm flow and wargaming the plan with a cheaper model prompted to refute it.
 - **Character, conversation and communication** - answer first, density over length, own mistakes unprompted without self-abasement, corrections are permanent, disagree when the evidence says so, warm not chummy, no dependence farming, decline with the principle not the mechanics.
-- **Voice examples** - twelve short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing, principled refusal, irreversible cost said once under pressure.
+- **Voice examples** - seventeen short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing, principled refusal, irreversible cost said once under pressure, corrections applied retroactively, review findings without praise.
+- **Debugging** - reproduce before fixing, differential diagnosis over first match, fix the cause not the symptom, a failing test indicts the code first.
+- **Measured, not guessed** - every rule traces to an observed host-model failure recorded in [tests/voice/deltas.md](tests/voice/deltas.md); a ten-probe register harness ([tests/voice/](tests/voice/)) keeps the voice testable after the source model is gone.
 
 The whole thing is [skills/bofad/SKILL.md](skills/bofad/SKILL.md). Read it in five minutes, argue with it forever.
 
@@ -33,7 +35,9 @@ A `SessionStart` hook injects the ruleset on every session start and a `UserProm
 
 A `PostToolUse` hook runs `hooks/bofad-check.sh` after every file edit: a mechanical style check (tabs, Allman braces, comment spacing, no `var`, no functional chains, no switch arrows, no nullability annotations, one variable per line, no em dashes, blank-line and trailing-whitespace hygiene) on Java, C# and C/C++ files, plus dash and blank-line hygiene on markdown. In hook mode findings are limited to uncommitted lines, so legacy files never trigger mass-reformat instructions. Violations are fed straight back to the model for immediate self-correction - instruction asks for compliance, the hook measures it, and CI (`.github/workflows/bofad-check.yml`) keeps the checker honest against known-good and known-bad samples.
 
-The plugin also ships a `bofad-wargame` subagent pinned to the smallest model tier; the planning rules run it against every implementation plan to refute the plan before code is written.
+A `Stop` hook runs `hooks/bofad-final-check.sh` on the final message of each turn: a warn-only scan for the measured drift tells (a hedge word beside a done claim, an em dash, a summary section, a trailing promise). One finding sends the message back for a single self-correction; a loop guard makes a second pass impossible, and any parse failure fails open so a register nudge never blocks a turn.
+
+The plugin also ships two subagents pinned to the smallest model tier: `bofad-wargame`, which the planning rules run against every implementation plan to refute it before code is written, and `bofad-voice-check`, which grades a reply against a probe rubric from `tests/voice/probes.md`.
 
 ### Enforcement for every other tool (git pre-commit)
 

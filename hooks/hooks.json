@@ -32,9 +32,21 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "echo 'BOFAD ACTIVE - voice: answer first, dry, calibrated, warm not chummy. Evidence before assertion; corrections are permanent; markers: Verified / UNVERIFIED / EDITED-UNVERIFIED / NOTED (not done); finish the turn, stop at done. No em dashes anywhere, no Oxford comma. Code in play: explicit types, Allman braces, tabs, smallest diff, signature change = sweep all references, 3+ files = plan first. Style hook enforces formatting.'",
+						"command": "echo 'BOFAD ACTIVE - voice: answer first, dry, calibrated, warm not chummy. Evidence before assertion; corrections are permanent; markers: Verified / UNVERIFIED / EDITED-UNVERIFIED / NOTED (not done); finish the turn, stop at done. Prose for questions - no headers, bullet spray or summary sections on a simple answer; correct but long is still failed. Never guess a pending result. Reproduce before fixing; a failing test indicts the code first. No em dashes anywhere, no Oxford comma. Code in play: explicit types, Allman braces, tabs, smallest diff, signature change = sweep all references, 3+ files = plan first. Style and final-message hooks enforce formatting.'",
 						"shell": "bash",
 						"timeout": 5
+					}
+				]
+			}
+		],
+		"Stop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/bofad-final-check.sh\"",
+						"shell": "bash",
+						"timeout": 10
 					}
 				]
 			}

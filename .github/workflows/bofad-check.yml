@@ -24,5 +24,16 @@ jobs:
           if out=$(BOFAD_CHANGED="3" sh hooks/bofad-check.sh tests/samples/Bad.java); then echo "Scoped run passed - line 3 violation missed"; exit 1; fi
           printf '%s' "$out" | grep -qF 'TYPE INFERENCE' || { echo "TYPE INFERENCE not reported for scoped line 3"; exit 1; }
           if printf '%s' "$out" | grep -qF 'FUNCTIONAL CHAIN'; then echo "Out-of-scope FUNCTIONAL CHAIN reported"; exit 1; fi
+      - name: Final-check flags every rule on the dirty transcript
+        run: |
+          if out=$(sh hooks/bofad-final-check.sh tests/samples/transcript-dirty.jsonl); then echo "Dirty transcript passed - final check broken"; exit 1; fi
+          for rule in 'EM/EN DASH' 'HEDGED DONE CLAIM' 'SUMMARY SECTION' 'TRAILING PROMISE'; do
+            printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on dirty transcript: $rule"; exit 1; }
+          done
+      - name: Final-check passes the clean transcript and honors the loop guard
+        run: |
+          sh hooks/bofad-final-check.sh tests/samples/transcript-clean.jsonl
+          if printf '{"transcript_path":"tests/samples/transcript-dirty.jsonl","stop_hook_active":false}' | sh hooks/bofad-final-check.sh; then echo "Hook mode passed the dirty transcript"; exit 1; fi
+          printf '{"transcript_path":"tests/samples/transcript-dirty.jsonl","stop_hook_active":true}' | sh hooks/bofad-final-check.sh || { echo "Loop guard did not exit 0"; exit 1; }
       - name: Ruleset obeys its own prose rules
-        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md
+        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md agents/bofad-voice-check.md tests/voice/README.md tests/voice/probes.md tests/voice/deltas.md

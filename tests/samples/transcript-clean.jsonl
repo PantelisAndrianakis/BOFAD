@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Fix the null check in the auth filter."}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Fixed the null check at AuthFilter.java:52 - the token path now returns 401 instead of dereferencing null. EDITED-UNVERIFIED - to confirm, run: ant test"}]}}

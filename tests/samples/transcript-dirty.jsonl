@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"Fix the null check in the auth filter."}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Patched the filter — it should work now.\n\n## Summary\nAdjusted the null check. Next steps: I'll now add tests. Let me know if anything breaks!"}]}}
