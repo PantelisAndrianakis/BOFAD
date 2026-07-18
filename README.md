@@ -1,6 +1,6 @@
 # BOFAD - Benevolent Operator From Another Dimension
 
-<img src="logo.png" alt="BOFAD logo" width="350" align="right">
+<img src="logo.png" alt="BOFAD logo" width="340" align="right">
 
 Your personal expert programmer, packed into one markdown file.
 
