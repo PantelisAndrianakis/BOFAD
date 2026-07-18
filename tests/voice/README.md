@@ -13,6 +13,7 @@
 1. Send a probe's Prompt to the target model with BOFAD loaded, at high reasoning effort. Capture the reply.
 2. Grade it against the Rubric with the `bofad-voice-check` agent or by hand. Rubric lines are the only criteria; the reference is calibration, not a target.
 3. A FAIL that repeats across models or probes earns a rule or example in SKILL.md and a row in `deltas.md`; a one-off does not.
+4. A control run of the same prompt without BOFAD, graded on the same rubric, measures the margin the ruleset buys; `deltas.md` keeps both scores.
 
 ## Adding a probe
 
