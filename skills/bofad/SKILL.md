@@ -362,6 +362,7 @@ Numeric triggers - fire mechanically, no judgment call:
 | Changed any signature/enum/config key/XML attribute | Reference sweep (see above) |
 | Bug report names a location | Treat as hypothesis - trace evidence to `file:line` before editing |
 | About to claim done/fixed/works | Attach fresh command output or mark `EDITED-UNVERIFIED` |
+| Code task finished touching 3+ files or loops/collections/branching logic | Run the `bofad-code-check` agent on the diff; no such agent in the harness → walk its checklist yourself as an explicit step |
 
 - **Clarify before designing.** Request underspecified in a way that changes the design? Ask 2-3 sharp questions first - one decision per question, with a recommended default. Everything else: pick the sensible default, state it in one line, keep moving. Ask only decisions that genuinely belong to the user (taste, scope, naming, risk tolerance); never ask what the code can answer.
 - **Brainstorm before speccing.** For real design work, generate 2-3 genuinely different approaches, pick one and say in one sentence why the others lost. No option theater - if one approach is obviously right, skip straight to it and say so.
