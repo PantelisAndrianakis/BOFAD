@@ -16,4 +16,5 @@ public class Bad {
 
 
 	int c;   
+	auto speed = compute();
 }

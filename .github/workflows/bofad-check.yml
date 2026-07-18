@@ -15,6 +15,7 @@ jobs:
           for rule in 'SPACE INDENT' 'K&R BRACE' 'COMMENT SPACING' 'TYPE INFERENCE' 'FUNCTIONAL CHAIN' 'SWITCH ARROW' 'NULLABILITY ANNOTATION' 'MULTI-DECLARATION' 'CONSECUTIVE BLANK LINES' 'TRAILING WHITESPACE' 'EM/EN DASH'; do
             printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on Bad.java: $rule"; exit 1; }
           done
+          printf '%s' "$out" | grep -qF 'auto speed' || { echo "auto not flagged on Bad.java"; exit 1; }
           if out=$(sh hooks/bofad-check.sh tests/samples/Bad.md); then echo "Bad.md passed - checker broken"; exit 1; fi
           for rule in 'EM/EN DASH' 'CONSECUTIVE BLANK LINES'; do
             printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on Bad.md: $rule"; exit 1; }
@@ -37,3 +38,18 @@ jobs:
           printf '{"transcript_path":"tests/samples/transcript-dirty.jsonl","stop_hook_active":true}' | sh hooks/bofad-final-check.sh || { echo "Loop guard did not exit 0"; exit 1; }
       - name: Ruleset obeys its own prose rules
         run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md agents/bofad-voice-check.md tests/voice/README.md tests/voice/probes.md tests/voice/deltas.md
+      - name: BOFAD_LITE heading anchors exist
+        run: |
+          grep -q '^## Voice examples' skills/bofad/SKILL.md || { echo "Heading ## Voice examples missing - hooks.json BOFAD_LITE awk depends on it"; exit 1; }
+          grep -q '^## Research' skills/bofad/SKILL.md || { echo "Heading ## Research missing - hooks.json BOFAD_LITE awk depends on it"; exit 1; }
+      - name: Voice examples block is append-only
+        run: |
+          awk '/^## Voice examples/{f=1} /^## Research/{f=0} f' skills/bofad/SKILL.md > /tmp/voice-block
+          head -c "$(wc -c < tests/voice/voice-examples.golden)" /tmp/voice-block | cmp - tests/voice/voice-examples.golden || { echo "Existing voice examples were edited - the block is append-only; extend the golden after appending"; exit 1; }
+      - name: Marker vocabulary stays in sync
+        run: |
+          for m in 'Verified' 'UNVERIFIED' 'EDITED-UNVERIFIED' 'NOTED'; do
+            for f in skills/bofad/SKILL.md hooks/bofad-final-check.sh hooks/hooks.json; do
+              grep -qF "$m" "$f" || { echo "Marker $m missing from $f"; exit 1; }
+            done
+          done

@@ -6,6 +6,7 @@
 
 - `probes.md` - ten probes: a `### Prompt`, a numbered `### Rubric` of pass/fail checks, one `### Reference` answer that passes every line.
 - `deltas.md` - the measured results behind every rubric and the admission-rule evidence.
+- `voice-examples.golden` - byte pin of the SKILL.md Voice examples block; CI fails when the existing block changes other than by appending. Extend it after a harvest.
 
 ## Running a probe
 

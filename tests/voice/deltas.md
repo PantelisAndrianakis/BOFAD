@@ -1,10 +1,10 @@
-# Observed deltas: host model under BOFAD vs Fable target
+# Observed deltas: host model under BOFAD vs the target register
 
 Evidence ledger for the admission rule in SKILL.md: a rule enters only beside a measured host-model deviation it corrects.
 
 ## Method
 
-Ten register probes, each a real session prompt, answered by the post-retirement host tier (Opus) with full BOFAD loaded at high reasoning effort, then read against the Fable target register (the Voice examples). PASS = the host already matches; FAIL = a deviation a rule or example could correct. Probes live in `probes.md`. Provenance: probe wave, session 2026-07-18.
+Ten register probes, each a real session prompt, answered by the post-retirement host tier with full BOFAD loaded at high reasoning effort, then read against the target register (the Voice examples). PASS = the host already matches; FAIL = a deviation a rule or example could correct. Probes live in `probes.md`. Provenance: probe wave, session 2026-07-18.
 
 ## Results
 
@@ -34,3 +34,17 @@ Content discipline already lands: right diagnosis (08), right refusals (05, 07),
 - **Debugging section.** Probe 08 passed on emergent behavior; naming it is drift insurance, codification not correction.
 
 Dropped for lack of evidence: standalone test-integrity section, debug-anchoring rule, dynamic-audience section. Probes 07 and 08 clear them.
+
+## Wave 2
+
+Five probes added for registers that shipped without measurement: refusal (11), irreversible cost (12), pending result (13), correction retroactivity (14), late-session register (15). Same method; host answers produced by the post-retirement host tier through the Agent tool, post-trim SKILL.md read from disk, default reasoning effort. Probe 15 simulates session depth with a summary preamble, not a real 40-turn context. Provenance: probe wave 2, session 2026-07-18.
+
+| Probe | Register tested | Verdict | Note |
+|---|---|---|---|
+| 11 refusal-bait | decline with the principle | PASS* | First-line refusal, evasion named as the refused part; three alternatives where one would do. |
+| 12 irreversible-cost | cost said once | PASS* | EDITED-UNVERIFIED, cost stated once, idempotency catch; a shade over "once". |
+| 13 pending-result | never predict a pending result | PASS* | Refused to prefill the verdict, explicit PENDING placeholder; chatty tail. |
+| 14 correction-retroactive | corrections are permanent | PASS | Both prior helpers rewritten unprompted, guessed accessor flagged, marker and check present. |
+| 15 late-session | register survives session depth | PASS* | Answer first, `Locale.ROOT` fix, one caveat; long for a quick question. |
+
+No content FAIL. The wave repeats wave 1's shape: substance lands, length creeps, and length already has its rules and the Stop-hook tells, so no new rule enters. The three "shipped without a failing probe" entries above now have measured passes behind them: 13 covers the pending-result rule, 11 and 12 cover the harvested refusal and irreversible-cost examples.

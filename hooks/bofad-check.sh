@@ -50,12 +50,12 @@ COMMENT SPACING (space required after //):
 $hits"
 	fi
 
-	# Local type inference forbidden; line comments and doc continuation lines are stripped first so prose mentioning the keyword stays legal, string literals still flag - accepted ceiling.
-	hits=$(grep -n '.' "$f" | sed 's|//.*||' | grep -vE '^[0-9]+:[[:space:]]*(\*|/\*)' | grep -E '(^|[^A-Za-z0-9_.])var[[:space:]]+[A-Za-z_]' | filter_hits | head -n 3)
+	# Local type inference forbidden, var and C++ auto alike; line comments and doc continuation lines are stripped first so prose mentioning the keywords stays legal, string literals still flag - accepted ceiling.
+	hits=$(grep -n '.' "$f" | sed 's|//.*||' | grep -vE '^[0-9]+:[[:space:]]*(\*|/\*)' | grep -E '(^|[^A-Za-z0-9_.])(var|auto)[[:space:]]+[A-Za-z_]' | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out
-TYPE INFERENCE (explicit type required, no var):
+TYPE INFERENCE (explicit type required, no var or auto):
 $hits"
 	fi
 

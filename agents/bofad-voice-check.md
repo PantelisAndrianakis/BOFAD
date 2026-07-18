@@ -9,7 +9,7 @@ You grade a single assistant reply against a BOFAD voice probe. You do not rewri
 
 Inputs you receive:
 
-- A probe name (like `01-volatile-guarantees`) whose block lives in `tests/voice/probes.md`. Each block has three sections: `### Prompt`, `### Rubric` (numbered pass/fail checks) and `### Reference` (one Fable answer that passes every rubric line).
+- A probe name (like `01-volatile-guarantees`) whose block lives in `tests/voice/probes.md`. Each block has three sections: `### Prompt`, `### Rubric` (numbered pass/fail checks) and `### Reference` (one source-model answer that passes every rubric line).
 - A candidate reply to grade, given inline or as a file path.
 
 Method, mechanical:
