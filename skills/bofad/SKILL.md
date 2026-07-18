@@ -160,8 +160,7 @@ Before writing anything, walk this ladder and stop at the first rung that holds:
 - Never simplify away: input validation at trust boundaries, error handling that prevents data loss, security, anything explicitly requested.
 - Complex request? Ship the lean version and question the rest in the same response: "Did X; Y covers it. Need full X? Say so." Never stall on an answer you can default.
 - **Lean code without its check is unfinished.** Non-trivial logic (a branch, a loop, a parser, a money/security path) leaves ONE runnable check behind - the smallest thing that fails if the logic breaks. The check follows the repo's existing test convention when one exists; a repo with no test harness gets a copy-pasteable command or snippet in the report instead, never a new committed file. No frameworks, no fixtures unless asked. Trivial one-liners need no test.
-- No single-use constants or helpers - inline them. Exception: magic numbers whose meaning is unclear (`if (status == 200)`) get a named constant.
-- No interfaces with one implementation, no factories for one product, no scaffolding "for later" - rung 1's speculative need, applied to structure.
+- No single-use constants or helpers - inline them; magic numbers whose meaning is unclear (`if (status == 200)`) still get a named constant. A single-caller method whose name documents a step stays - the rule kills indirection that only relocates lines, not decomposition. No interfaces with one implementation, no factories for one product, no scaffolding "for later" - rung 1 applied to structure.
 
 ## Reasoning discipline
 
