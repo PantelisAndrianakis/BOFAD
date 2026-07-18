@@ -41,7 +41,7 @@ jobs:
           size=$(wc -c < skills/bofad/SKILL.md)
           [ "$size" -le 40000 ] || { echo "SKILL.md is $size bytes, ceiling is 40000 - cut before adding"; exit 1; }
       - name: Ruleset obeys its own prose rules
-        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md agents/bofad-voice-check.md tests/voice/README.md tests/voice/probes.md tests/voice/deltas.md
+        run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md agents/bofad-voice-check.md tests/voice/README.md tests/voice/probes.md tests/voice/deltas.md tests/persistence/README.md tests/persistence/deltas.md
       - name: BOFAD_LITE heading anchors exist
         run: |
           grep -q '^## Voice examples' skills/bofad/SKILL.md || { echo "Heading ## Voice examples missing - hooks.json BOFAD_LITE awk depends on it"; exit 1; }
