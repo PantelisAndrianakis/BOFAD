@@ -38,7 +38,7 @@ install_block()
 }
 
 # Claude Code: installed as a plugin (always-on when enabled), not via this script.
-echo 'Claude Code: install as a plugin -> /plugin marketplace add PantelisAndrianakis/BOFAD  then  /plugin install bofad@bofad'
+echo 'Claude Code: install as a plugin -> /plugin marketplace add PantelisAndrianakis/BOFAD  then  /plugin install BOFAD@AnotherDimension'
 
 # Codex CLI: global instructions in ~/.codex/AGENTS.md.
 install_block "$HOME/.codex/AGENTS.md"

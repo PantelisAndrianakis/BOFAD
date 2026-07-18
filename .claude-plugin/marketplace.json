@@ -1,6 +1,6 @@
 {
 	"$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-	"name": "bofad",
+	"name": "AnotherDimension",
 	"description": "BOFAD - Benevolent Operator From Another Dimension. Always-on coding style and reasoning discipline for AI coding agents.",
 	"owner": {
 		"name": "Pantelis Andrianakis",
@@ -8,7 +8,7 @@
 	},
 	"plugins": [
 		{
-			"name": "bofad",
+			"name": "BOFAD",
 			"description": "Your personal expert programmer: explicit types, Allman braces, single-line code, no functional chains, allocation awareness, behavior-preserving refactors. Always on when enabled.",
 			"source": "./",
 			"category": "productivity"

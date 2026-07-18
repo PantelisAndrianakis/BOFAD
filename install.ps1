@@ -48,7 +48,7 @@ function Install-Block($targetFile)
 }
 
 # Claude Code: installed as a plugin (always-on when enabled), not via this script.
-Write-Host 'Claude Code: install as a plugin -> /plugin marketplace add PantelisAndrianakis/BOFAD  then  /plugin install bofad@bofad'
+Write-Host 'Claude Code: install as a plugin -> /plugin marketplace add PantelisAndrianakis/BOFAD  then  /plugin install BOFAD@AnotherDimension'
 
 # Codex CLI: global instructions in ~\.codex\AGENTS.md.
 Install-Block (Join-Path $env:USERPROFILE '.codex\AGENTS.md')

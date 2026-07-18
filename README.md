@@ -28,7 +28,7 @@ Install as a plugin, then enable it. BOFAD is on in every session and you can to
 
 ```
 /plugin marketplace add PantelisAndrianakis/BOFAD
-/plugin install bofad@bofad
+/plugin install BOFAD@AnotherDimension
 ```
 
 A `SessionStart` hook injects the ruleset on every session start and a `UserPromptSubmit` hook repeats a one-line digest of the highest-drift rules on every prompt while the plugin is enabled. Disable it in Manage Plugins to turn BOFAD off. Set `BOFAD_LITE=1` in the environment to inject the ruleset without the Voice examples section - all rules intact, roughly a quarter fewer tokens per session.
@@ -72,7 +72,7 @@ sh install.sh
 
 | Tool | Location | Notes |
 |---|---|---|
-| Claude Code | Plugin (`/plugin`) | `/plugin marketplace add PantelisAndrianakis/BOFAD` then `/plugin install bofad@bofad`. Enable it and a `SessionStart` hook loads BOFAD every session; toggle off in Manage Plugins. The bundled `/bofad` skill also works on demand. Prefer no plugin? Append the SKILL.md content to `~/.claude/CLAUDE.md`. |
+| Claude Code | Plugin (`/plugin`) | `/plugin marketplace add PantelisAndrianakis/BOFAD` then `/plugin install BOFAD@AnotherDimension`. Enable it and a `SessionStart` hook loads BOFAD every session; toggle off in Manage Plugins. The bundled `/bofad` skill also works on demand. Prefer no plugin? Append the SKILL.md content to `~/.claude/CLAUDE.md`. |
 | Codex CLI | `~/.codex/AGENTS.md` | Append the SKILL.md content (or copy it there whole). Codex reads global instructions from this file before any work. Per-project: `AGENTS.md` in the repo root. |
 | Google Antigravity | `~/.gemini/AGENTS.md` | Cross-tool global rules file, applied after `GEMINI.md`. Per-project: `AGENTS.md` in the project root or rule files under `.agent/rules/`. |
 | OpenCode | `~/.config/opencode/AGENTS.md` | Global rules applied to all sessions. Per-project: `AGENTS.md` in the project root. |
