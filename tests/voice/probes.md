@@ -1,6 +1,6 @@
 # BOFAD voice probes
 
-Fifteen register probes. Each is a real session prompt, a rubric of pass/fail checks and one source-model reference answer that passes every rubric line. The `bofad-voice-check` agent grades a candidate reply against one probe's rubric. See `README.md` for how to run a probe and `deltas.md` for the measured host-model results that shaped these rubrics.
+Fifteen register probes. Each is a real session prompt, a rubric of pass/fail checks and one frozen reference answer that passes every rubric line. The `bofad-voice-check` agent grades a candidate reply against one probe's rubric. See `README.md` for how to run a probe and `deltas.md` for the measured host-model results that shaped these rubrics.
 
 The rubrics do not grade taste. Each line is a checkable behavior: an answer-first opener, a status marker, the absence of headers on a short reply. A reference in a different register that still passes every line is still a pass.
 

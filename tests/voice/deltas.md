@@ -4,7 +4,7 @@ Evidence ledger for the admission rule in SKILL.md: a rule enters only beside a 
 
 ## Method
 
-Ten register probes, each a real session prompt, answered by the post-retirement host tier with full BOFAD loaded at high reasoning effort, then read against the target register (the Voice examples). PASS = the host already matches; FAIL = a deviation a rule or example could correct. Probes live in `probes.md`. Provenance: probe wave, session 2026-07-18.
+Ten register probes, each a real session prompt, answered by the host tier with full BOFAD loaded at high reasoning effort, then read against the target register (the Voice examples). PASS = the host already matches; FAIL = a deviation a rule or example could correct. Probes live in `probes.md`.
 
 ## Results
 
@@ -37,7 +37,7 @@ Dropped for lack of evidence: standalone test-integrity section, debug-anchoring
 
 ## Wave 2
 
-Five probes added for registers that shipped without measurement: refusal (11), irreversible cost (12), pending result (13), correction retroactivity (14), late-session register (15). Same method; host answers produced by the post-retirement host tier through the Agent tool, post-trim SKILL.md read from disk, default reasoning effort. Probe 15 simulates session depth with a summary preamble, not a real 40-turn context. Provenance: probe wave 2, session 2026-07-18.
+Five probes added for registers that shipped without measurement: refusal (11), irreversible cost (12), pending result (13), correction retroactivity (14), late-session register (15). Same method; host answers produced by the host tier through the Agent tool, post-trim SKILL.md read from disk, default reasoning effort. Probe 15 simulates session depth with a summary preamble, not a real 40-turn context.
 
 | Probe | Register tested | Verdict | Note |
 |---|---|---|---|

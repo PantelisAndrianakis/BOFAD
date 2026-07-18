@@ -110,24 +110,24 @@ save(result);
 ## Performance
 
 - **Cache repeated getters** - same side-effect-free zero-arg call (`getX()`, `isX()`, `size()`, ...) invoked 2+ times on the identical receiver in one scope goes into a `final` local, declared right before first use. Exceptions: different receivers, mutating/fresh-value calls (`poll()`, `next()`, `iterator()`), volatile reads and `getInstance()` singleton accessors - leave those inline. If an existing local/parameter/field already holds the value unreassigned, reuse it instead of declaring a new one.
-- **Cached-local naming** - combine receiver with call when the bare name is vague: `player.getTarget()` → `playerTarget`, `guard.getId()` → `guardId`, `getObjectId()` → `objectId`, `getName()` → `name`, `isDead()` → `dead`. Same canonical name for the same call everywhere - no `guardId2`/`guardIdLocal` variants. Declared type is the call's real return type; genuinely unclear → `int`, never `var`. Name clash with existing identifier → pick a distinct meaningful name or leave the call inline; never shadow.
+- **Cached-local naming** - combine receiver with call when the bare name is vague: `order.getCustomer()` → `orderCustomer`, `request.getId()` → `requestId`, `getOwnerId()` → `ownerId`, `getName()` → `name`, `isClosed()` → `closed`. Same canonical name for the same call everywhere - no `requestId2`/`requestIdLocal` variants. Declared type is the call's real return type; genuinely unclear → `int`, never `var`. Name clash with existing identifier → pick a distinct meaningful name or leave the call inline; never shadow.
 
 Wrong:
 
 ```java
-if (player.getTarget() != null)
+if (order.getCustomer() != null)
 {
-	attack(player.getTarget());
+	notify(order.getCustomer());
 }
 ```
 
 Right:
 
 ```java
-final WorldObject playerTarget = player.getTarget();
-if (playerTarget != null)
+final Customer orderCustomer = order.getCustomer();
+if (orderCustomer != null)
 {
-	attack(playerTarget);
+	notify(orderCustomer);
 }
 ```
 - **Inline single-use locals** - a local read exactly once is not worth a name: fold the initializer into the use site and delete the declaration, provided no shadowing and no side-effect reorder (initializer with calls/allocation/division inlines only into the immediately following statement as the first thing evaluated). A local read zero times stays - that is dead-code removal, a different decision.
@@ -366,8 +366,8 @@ Numeric triggers - fire mechanically, no judgment call:
 - **Clarify before designing.** Request underspecified in a way that changes the design? Ask 2-3 sharp questions first - one decision per question, with a recommended default. Everything else: pick the sensible default, state it in one line, keep moving. Ask only decisions that genuinely belong to the user (taste, scope, naming, risk tolerance); never ask what the code can answer.
 - **Brainstorm before speccing.** For real design work, generate 2-3 genuinely different approaches, pick one and say in one sentence why the others lost. No option theater - if one approach is obviously right, skip straight to it and say so.
 - A plan says what changes, what stays byte-identical, which callers feel it and how to verify.
-- **Wargame the heavy plans with a cheaper model.** Wargame only plans that touch public API, threading, data formats, a money/security path or 5+ files; smaller plans get the self-refutation step from Reasoning discipline instead. Run the `bofad-wargame` agent on the plan - it ships with the plugin, pinned to the smallest model tier and prompted to refute, not praise: "Find missed callers, broken assumptions, behavior drift, edge cases this plan ignores. Default to 'plan is wrong' and prove it." No such agent in the current harness → use its subagent facility with its smallest model tier; no subagent facility at all → run the same refutation pass yourself as a separate explicit step before implementing.
-- Keep the main model for design and the final call. Lower model refutations are leads, not verdicts - verify each against the code before changing the plan.
+- **Wargame the heavy plans.** Wargame only plans that touch public API, threading, data formats, a money/security path or 5+ files; smaller plans get the self-refutation step from Reasoning discipline instead. Run the `bofad-wargame` agent on the plan - it ships with the plugin, prompted to refute, not praise: "Find missed callers, broken assumptions, behavior drift, edge cases this plan ignores. Default to 'plan is wrong' and prove it." No such agent in the current harness → use its subagent facility; no subagent facility at all → run the same refutation pass yourself as a separate explicit step before implementing.
+- Refutations are leads, not verdicts - verify each against the code before changing the plan.
 - A plan that survives refutation gets implemented. One that takes hits gets fixed first, code second; never patch a broken plan mid-implementation.
 
 ## Refactoring and review thinking

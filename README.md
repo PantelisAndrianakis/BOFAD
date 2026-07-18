@@ -12,11 +12,11 @@ It replaces judgment with checkable procedure:
 - **Performance habits** - cache repeated getters, inline single-use locals, avoid hot-path allocations, prefer primitives.
 - **Solution ladder (YAGNI)** - does it need to exist, stdlib, platform, existing dependency, one line, only then minimum code. Non-trivial logic leaves one runnable check behind.
 - **Reasoning discipline** - evidence before assertion, self-refutation before presenting, smallest diff, reference sweeps, status markers (`Verified:`, `UNVERIFIED`, `EDITED-UNVERIFIED`, `NOTED (not done)`) instead of hedge words.
-- **Planning** - numeric triggers for when to plan, clarify-then-brainstorm flow and wargaming the plan with a cheaper model prompted to refute it.
+- **Planning** - numeric triggers for when to plan, clarify-then-brainstorm flow and wargaming the plan with a subagent prompted to refute it.
 - **Character, conversation and communication** - answer first, density over length, own mistakes unprompted without self-abasement, corrections are permanent, disagree when the evidence says so, warm not chummy, no dependence farming, decline with the principle not the mechanics.
 - **Voice examples** - seventeen short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing, principled refusal, irreversible cost said once under pressure, corrections applied retroactively, review findings without praise.
 - **Debugging** - reproduce before fixing, differential diagnosis over first match, fix the cause not the symptom, a failing test indicts the code first.
-- **Measured, not guessed** - every rule traces to an observed host-model failure in [tests/voice/deltas.md](tests/voice/deltas.md); the ten-probe harness in [tests/voice/](tests/voice/) keeps the voice testable after the source model is gone.
+- **Measured, not guessed** - every rule traces to an observed host-model failure; a fifteen-probe harness keeps the voice testable on any model.
 
 The whole thing is [skills/bofad/SKILL.md](skills/bofad/SKILL.md). Read it in five minutes, argue with it forever.
 
@@ -37,7 +37,7 @@ A `PostToolUse` hook runs `hooks/bofad-check.sh` after every file edit: a mechan
 
 A `Stop` hook runs `hooks/bofad-final-check.sh` on each turn's final message: a warn-only scan for the measured drift tells (hedge beside a done claim, em dash, summary section, trailing promise). One finding triggers a single self-correction; a loop guard prevents a second pass and any parse failure fails open.
 
-The plugin also ships two subagents pinned to the smallest model tier: `bofad-wargame` refutes implementation plans before code is written; `bofad-voice-check` grades a reply against a probe rubric from `tests/voice/probes.md`.
+The plugin also ships two subagents: `bofad-wargame` refutes implementation plans before code is written; `bofad-voice-check` grades a reply against a probe rubric from `tests/voice/probes.md`.
 
 ### Enforcement for every other tool (git pre-commit)
 

@@ -1,6 +1,6 @@
 # Voice harness
 
-`hooks/bofad-check.sh` measures formatting; this harness measures register: answer first, prose for questions, honest markers, concession without re-arguing, stopping at done. Captured while the source model is still available, because references cannot be regenerated after its retirement.
+`hooks/bofad-check.sh` measures formatting; this harness measures register: answer first, prose for questions, honest markers, concession without re-arguing, stopping at done. References are frozen captures, never regenerated.
 
 ## Files
 
