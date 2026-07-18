@@ -37,7 +37,7 @@ A `PostToolUse` hook runs `hooks/bofad-check.sh` after every file edit: a mechan
 
 A `Stop` hook runs `hooks/bofad-final-check.sh` on each turn's final message: a warn-only scan for the measured drift tells (hedge beside a done claim, em dash, summary section, trailing promise, code-free reply past 250 words). One finding triggers a single self-correction; a loop guard prevents a second pass and any parse failure fails open.
 
-The plugin also ships three subagents: `bofad-wargame` refutes implementation plans before code is written; `bofad-voice-check` grades a reply against a probe rubric from `tests/voice/probes.md`; `bofad-code-check` grades finished code against the semantic rules the checker script cannot see (Solution ladder, Performance habits, switch shape), validated against `tests/samples/SemanticBad.java` and `SemanticGood.java`.
+The plugin also ships three subagents: `bofad-wargame` refutes implementation plans before code is written; `bofad-voice-check` grades a reply against a probe rubric from `tests/voice/probes.md`; `bofad-code-check` grades finished code against the semantic rules the checker script cannot see (Solution ladder, Performance habits, switch shape), validated against `tests/samples/SemanticBad.java` and `SemanticGood.java`. The `/bofad-review` command runs both review layers on demand, the checker script then the code-check agent, over given paths or the uncommitted changes; findings only, fixes wait to be asked for.
 
 ### Enforcement for every other tool (git pre-commit)
 
