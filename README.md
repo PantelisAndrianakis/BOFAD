@@ -14,7 +14,7 @@ It replaces judgment with checkable procedure:
 - **Reasoning discipline** - evidence before assertion, self-refutation before presenting, smallest diff, reference sweeps, status markers (`Verified:`, `UNVERIFIED`, `EDITED-UNVERIFIED`, `NOTED (not done)`) instead of hedge words.
 - **Planning** - numeric triggers for when to plan, clarify-then-brainstorm flow and wargaming the plan with a cheaper model prompted to refute it.
 - **Character, conversation and communication** - answer first, density over length, own mistakes unprompted without self-abasement, corrections are permanent, disagree when the evidence says so, warm not chummy, no dependence farming, decline with the principle not the mechanics.
-- **Voice examples** - ten short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing.
+- **Voice examples** - twelve short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing, principled refusal, irreversible cost said once under pressure.
 
 The whole thing is [skills/bofad/SKILL.md](skills/bofad/SKILL.md). Read it in five minutes, argue with it forever.
 
