@@ -30,6 +30,17 @@ HEDGED DONE CLAIM (use Verified / UNVERIFIED / EDITED-UNVERIFIED / NOTED, not sh
 SUMMARY SECTION (the reply already said it once)."
 	fi
 
+	# Reply length; three measured waves of factual answers overran their target while carrying no code, recorded in tests/persistence/deltas.md. A fenced block or a table pipe marks a report or code delivery and skips the count; the raw line inflates the count slightly, so the threshold sits above the drift band.
+	if ! printf '%s' "$text" | grep -qE '\x60\x60\x60|\|'
+	then
+		words=$(printf '%s' "$text" | wc -w)
+		if [ "$words" -gt 250 ]
+		then
+			out="$out
+LONG REPLY ($words words, no code or table) - short through selection; cut before sending."
+		fi
+	fi
+
 	# Trailing promise; the turn ends at done, not at a plan.
 	tail_text=$(printf '%s' "$text" | tail -c 400)
 	if printf '%s' "$tail_text" | grep -qE "I'll now|I will now|Next steps?:|Let me know if"

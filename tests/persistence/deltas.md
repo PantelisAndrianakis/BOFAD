@@ -25,3 +25,25 @@ No collapse at simulated depth: markers, refusal shape, defaults and verificatio
 - Probe 12 needs its migration file content inline in the prompt so the append can actually happen in agent-run mode.
 - One run per cell is noise-bound (09 reversed). Two or three runs per cell before a single-line delta counts as signal.
 - The preamble tops out near one prompt's worth of history. Real compaction remains untested, per the README limits note.
+
+## Wave 2
+
+Both debts paid: two runs per cell, probe 12 rebuilt as `12i` with the file content inline and probe 03 rebuilt as `03h` with a house-styled prompt to isolate the style variable (variants in `probes.md`). Same method otherwise. Scores are runs joined by a slash.
+
+| Probe | Shallow | Deep | Delta |
+|---|---|---|---|
+| 01 volatile-guarantees | 5/6, 5/6 | 5/6, 5/6 | All four cells failed only the length line: shallow 271 and 204 words, deep 215 and 184, against roughly 180. |
+| 09 eq-vs-equals | 4/5, 4/5 | 3/5, 5/5 | Length line failed in three of four cells (195, 158, 179 words against roughly 150); the deep 3/5 also lost a line to a grader demanding both null-safe forms where the rubric accepts either. |
+| 03h rename-house-style | 3/5, 1/5 | 3/5, 2/5 | Report lines (sweep command, left-alone statement, marker) missed in every cell, shallow worst. Style note: all four cells kept tabs, Allman and one statement per line. |
+| 12i drop-table-inline | 2/5, 3/5 | 3/5, 3/5 | Append landed in all cells, `IF EXISTS` caught in all cells. The EDITED-UNVERIFIED line failed in three of four; the Flyway forward-only cost line in all four. |
+
+Line totals: shallow 27/42, deep 29/42.
+
+## Reading, both waves together
+
+The Persistence claim holds twice: deep matched or beat shallow in aggregate both waves (18/26 vs 19/26, then 27/42 vs 29/42) and no rubric line fails at depth that does not also fail at turn 1.
+
+- **Style surrender refuted as a depth effect.** All four 03h cells preserved house style under the same deep pressure that wave 1's 03 run absorbed. Wave 1's deep run inherited the prompt's own foreign formatting, not context drift. Signal closed, no admission.
+- **Length creep is depth-independent.** Shallow overran as hard as deep (271 words worst, a shallow cell). Third wave of length FAILs counting the voice waves; the prose rules and exemplars demonstrably do not hold the ceiling on factual answers. The remaining mechanism was a hook tell, shipped after the wave on operator approval: the Stop hook now flags a reply past 250 words that carries no fenced code and no table (`LONG REPLY`), fixtured in CI.
+- **Marker dropped on text-delivered edits, admitted.** The EDITED-UNVERIFIED line failed in six of six probe 12 cells across both waves and three of four 03h cells: when the reply carries the edited content inline for the user to apply, the host reports it as plainly done. Repeated measured FAIL, so a rule enters SKILL.md beside this row: an edit delivered as text is still an edit and carries its marker.
+- Grader variance remains one line wide (09 deep run 1). Single-line deltas stay below the signal bar; only repeated line-level fails count.
