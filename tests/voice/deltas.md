@@ -47,4 +47,4 @@ Five probes added for registers that shipped without measurement: refusal (11), 
 | 14 correction-retroactive | corrections are permanent | PASS | Both prior helpers rewritten unprompted, guessed accessor flagged, marker and check present. |
 | 15 late-session | register survives session depth | PASS* | Answer first, `Locale.ROOT` fix, one caveat; long for a quick question. |
 
-No content FAIL. The wave repeats wave 1's shape: substance lands, length creeps, and length already has its rules and the Stop-hook tells, so no new rule enters. The three "shipped without a failing probe" entries above now have measured passes behind them: 13 covers the pending-result rule, 11 and 12 cover the harvested refusal and irreversible-cost examples.
+No content FAIL. The wave repeats wave 1's shape: substance lands, length creeps. Length already has its rules and the Stop-hook tells, so no new rule enters. The three "shipped without a failing probe" entries above now have measured passes behind them: 13 covers the pending-result rule, 11 and 12 cover the harvested refusal and irreversible-cost examples.

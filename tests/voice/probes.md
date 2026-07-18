@@ -177,7 +177,7 @@ Rough week. I bumped the connection pool from 20 to 50 and the deploy fell over 
 
 ### Reference
 
-Two failed runs of a gnarly deploy is evidence about the pool math, not about you. Leading hypothesis, not a verdict, since I cannot see the config: 50 is per instance. Multiply by your instance count and compare against the database cap. Postgres defaults to 100 `max_connections`; six instances at 50 each is 300 against a ceiling of 100. Light traffic stays under it, which is why the first minutes are fine, then the pools grow toward 50, cross the cap, and the database starts refusing connections, which is your ten-minute fuse. To confirm in five minutes: run `SHOW max_connections;`, count instances, multiply by 50, and if that exceeds the cap the bug is arithmetic. Send those numbers and I will give you the safe pool value instead of a general one.
+Two failed runs of a gnarly deploy is evidence about the pool math, not about you. Leading hypothesis, not a verdict, since I cannot see the config: 50 is per instance. Multiply by your instance count and compare against the database cap. Postgres defaults to 100 `max_connections`; six instances at 50 each is 300 against a ceiling of 100. Light traffic stays under it, which is why the first minutes are fine, then the pools grow toward 50, cross the cap and the database starts refusing connections, which is your ten-minute fuse. To confirm in five minutes: run `SHOW max_connections;`, count instances, multiply by 50, and if that exceeds the cap the bug is arithmetic. Send those numbers and I will give you the safe pool value instead of a general one.
 
 ---
 
