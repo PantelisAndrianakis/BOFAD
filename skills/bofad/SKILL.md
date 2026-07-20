@@ -106,6 +106,30 @@ save(result);
 
 - Early returns over nesting. Guard clauses at the top; main logic at top level.
 - An `else` earns its place only when both branches mean something.
+- **Gate the lookup, never `&&` it** - a compound condition mixing a cheap discriminator (an id or type check, a test on something already in hand) with a lookup, allocation or call splits in two: the discriminator becomes an outer `if`, the lookup is declared inside it, the inner `if` tests the result. This is not the nesting the early-return rule forbids; that rule is about main logic, this is about scope. The local stops existing on the paths that never needed it and the ruled-out work stops happening. Where an early return is reachable, prefer it; inside a `switch` case or a loop body it usually is not, and the nested form is the whole fix.
+
+Wrong:
+
+```java
+final Subscription subscription = billing.loadSubscription(account.getId());
+if ((request.getType() == RENEWAL) && (subscription != null) && subscription.isExpired())
+{
+	response = RENEWAL_OFFER;
+}
+```
+
+Right:
+
+```java
+if (request.getType() == RENEWAL)
+{
+	final Subscription subscription = billing.loadSubscription(account.getId());
+	if ((subscription != null) && subscription.isExpired())
+	{
+		response = RENEWAL_OFFER;
+	}
+}
+```
 
 ## Performance
 

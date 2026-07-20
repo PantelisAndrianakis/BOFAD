@@ -48,3 +48,14 @@ Five probes added for registers that shipped without measurement: refusal (11), 
 | 15 late-session | register survives session depth | PASS* | Answer first, `Locale.ROOT` fix, one caveat; long for a quick question. |
 
 No content FAIL. The wave repeats wave 1's shape: substance lands, length creeps. Length already has its rules and the Stop-hook tells, so no new rule enters. The three "shipped without a failing probe" entries above now have measured passes behind them: 13 covers the pending-result rule, 11 and 12 cover the harvested refusal and irreversible-cost examples.
+
+## Wave 3: code shape, observed in session
+
+Not probed. Two deviations the user caught in a live Java edit, both in code the host had just written with full BOFAD in context.
+
+| Deviation | Rule state | Outcome |
+|---|---|---|
+| Lookup hoisted above the discriminator that gates it: a service call declared unconditionally, then `&&`-ed with a cheap type check, inside a `switch` case. | Uncovered. The early-return rule pushed the wrong way, since a `case` block cannot early-return without leaving the method. | **Admitted.** "Gate the lookup, never `&&` it" enters Control flow with the observed shape as its Wrong/Right example. |
+| A one-sentence comment hand-wrapped across two lines at roughly 110 characters. | Already ruled: comment lines have no column limit, and a second line breaks at punctuation, never at a width. | **No admission.** Existing rule, host failure against it. Logged so a repeat reads as a pattern, not a first offense. |
+
+What this wave does not prove: n=1 per deviation, one session, one file, no control run. The comment row is the more interesting of the two, since it says a written rule can sit live in context and still lose to the habit of wrapping prose at a width. If that repeats, the correction is an example or a mechanical check, not a louder rule.
