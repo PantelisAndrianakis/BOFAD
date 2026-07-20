@@ -95,8 +95,8 @@ save(result);
 
 ## Switch shape
 
-- Switch at 4+ cases; if/else for 1-3 branches, a trailing `else` counting as one branch.
-- If/else-if chain comparing the SAME variable to constants (enum, int/char/String literals, final constants) → rewrite as switch at 4+ branches, the final `else` counting as a branch and becoming `default`. `(x == A || x == B)` becomes stacked case labels sharing one block, each `||` value counting toward the 4+. `x.equals("A")` chains on the same receiver count as comparisons to String constants. Do NOT convert branches using ranges, `&&`, other method calls, `!=`, `<`/`>` or different variables.
+- Switch at 3+ specific cases; if/else for 1-2 specific branches. A trailing `else`/`default` never counts toward the threshold, so three constant comparisons are a switch whether or not an `else` follows them.
+- If/else-if chain comparing the SAME variable to constants (enum, int/char/String literals, final constants) → rewrite as switch at 3+ specific branches, the final `else` becoming `default` without counting toward the threshold. `(x == A || x == B)` becomes stacked case labels sharing one block, each `||` value counting toward the 3+. `x.equals("A")` chains on the same receiver count as comparisons to String constants. Do NOT convert branches using ranges, `&&`, other method calls, `!=`, `<`/`>` or different variables.
 - Allman braces throughout: each case, each fall-through label group and `default` gets its own `{ }` block.
 - Every block ends with `break;` - including the last - unless its final statement already leaves the switch (`return`, `throw`, `continue`). Never `break;` after `return`/`throw` (unreachable, won't compile).
 - Intentional fall-through gets a `// Fallthrough.` comment.

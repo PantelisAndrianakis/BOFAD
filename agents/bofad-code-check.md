@@ -14,8 +14,8 @@ The checklist below is the only scoring criteria. Mechanical style (braces, tabs
 2. **Single-use local** - a local read exactly once, foldable into its use site with no shadowing and no side-effect reorder. A local read zero times is dead code, a separate finding.
 3. **String concatenation in a loop** - belongs in the language's string builder.
 4. **Avoidable allocation in a loop or hot path** - a fresh object per iteration where one instance or a primitive would do.
-5. **If/else-if chain that should be a switch** - the SAME variable compared to constants across 4+ branches, the final `else` counting as one. Ranges, `&&`, method calls, `!=` or different variables disqualify the finding.
-6. **Switch that should be an if/else** - fewer than 4 cases.
+5. **If/else-if chain that should be a switch** - the SAME variable compared to constants across 3+ specific branches, a trailing `else` not counting toward the three. Ranges, `&&`, method calls, `!=` or different variables disqualify the finding.
+6. **Switch that should be an if/else** - fewer than 3 specific cases, a trailing `default` not counting toward the three.
 7. **Indirection that only relocates lines** - a single-use constant with an obvious meaning, or a single-caller helper that does not document a step. A single-caller method whose name explains a step stays.
 8. **Rung 1 violations** - an interface with one implementation, a factory for one product, config for a value that never changes, scaffolding for a future nobody asked for.
 9. **New dependency for what the standard library or a few lines already do.**
