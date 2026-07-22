@@ -95,6 +95,27 @@ MULTI-DECLARATION (one variable per line):
 $hits"
 	fi
 
+	# Blank-line layout drift against the bundled bofad-format.py; runs the formatter to a temp file and reports diff hunks. Standalone mode only, a whole-file diff has no meaning inside hook mode's changed-line scope. Config.java is excluded to match the formatter's own exclusion.
+	fmt="$(dirname "$0")/bofad-format.py"
+	case "$f" in
+		*Config.java) fmt="" ;;
+	esac
+	if [ -z "$CHANGED" ] && [ -n "$fmt" ] && [ -f "$fmt" ] && command -v python >/dev/null 2>&1
+	then
+		tmp=$(mktemp)
+		if python -c "import sys, importlib.util; spec = importlib.util.spec_from_file_location('fmt', sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.process_java_file(sys.argv[2], sys.argv[3])" "$fmt" "$f" "$tmp" 2>/dev/null
+		then
+			hits=$(diff "$f" "$tmp" | grep -E '^[0-9]' | head -n 3)
+			if [ -n "$hits" ]
+			then
+				out="$out
+FORMATTER DRIFT (blank-line layout, run hooks/bofad-format.py on this file):
+$hits"
+			fi
+		fi
+		rm -f "$tmp"
+	fi
+
 	common_checks "$f"
 }
 
@@ -155,7 +176,7 @@ check_file()
 	f="$1"
 	[ -f "$f" ] || return 0
 	case "$f" in
-		*.java|*.cs|*.c|*.cpp|*.h|*.hpp) check_code "$f" ;;
+		*.java|*.cs|*.c|*.cpp|*.h|*.hpp|*.ixx) check_code "$f" ;;
 		*.md) check_prose "$f" ;;
 		*) return 0 ;;
 	esac
