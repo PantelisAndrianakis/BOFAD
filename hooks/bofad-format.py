@@ -93,10 +93,10 @@ def is_inside_array_context(lines, current_index):
 
 def process_java_file(input_path, output_path):
     try:
-        with open(input_path, 'r', encoding='utf-8') as f:
+        with open(input_path, 'r', encoding='utf-8', newline='') as f:
             content = f.read()
     except UnicodeDecodeError:
-        with open(input_path, 'r', encoding='latin-1') as f:
+        with open(input_path, 'r', encoding='latin-1', newline='') as f:
             content = f.read()
     
     lines = content.splitlines()
@@ -108,7 +108,11 @@ def process_java_file(input_path, output_path):
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
-        
+
+        # Normalize whitespace-only lines to truly empty (no trailing tabs/spaces)
+        if stripped == '':
+            line = ''
+
         # Check if current line is empty and should be removed
         # Pattern: previous line ends with "();" -> current empty line -> next line starts with "static"
         if (stripped == '' and  # Current line is empty
@@ -130,7 +134,7 @@ def process_java_file(input_path, output_path):
             tab_count = len(line) - len(line.lstrip('\t'))
             
             # Add empty line before return
-            processed_lines.append('\t' * tab_count)
+            processed_lines.append('')
         
         # FIXED: Check for Javadoc start/end - handle single-line Javadoc comments
         if stripped.startswith('/**'):
@@ -191,7 +195,7 @@ def process_java_file(input_path, output_path):
                 processed_lines.append(line)
                 
                 # Add empty line with proper indentation
-                processed_lines.append('\t' * curr_tab_count)
+                processed_lines.append('')
                 
                 # Skip to next iteration
                 i += 1
@@ -219,7 +223,7 @@ def process_java_file(input_path, output_path):
                 tab_count = len(lines[i+1]) - len(lines[i+1].lstrip('\t'))
                 
                 # Add empty line before comment only if one doesn't exist
-                processed_lines.append('\t' * tab_count)
+                processed_lines.append('')
                 
             # Skip to the comment line in next iteration
             i += 1
@@ -249,7 +253,7 @@ def process_java_file(input_path, output_path):
                 # Only add empty line if we haven't already added one
                 if not last_added_is_empty:
                     # Add empty line before the comment
-                    processed_lines.append('\t' * curr_tab_count)
+                    processed_lines.append('')
             
         # Enhanced pattern matching for comments between code lines
         # Check for pattern: meaningful code -> comment -> (anything except empty or })
@@ -345,7 +349,7 @@ def process_java_file(input_path, output_path):
                 # Only add empty line if we haven't already added one
                 if not last_added_is_empty:
                     # Add empty line before the comment
-                    processed_lines.append('\t' * curr_tab_count)
+                    processed_lines.append('')
         
         # Check for pattern: @formatter comment -> comment -> non-comment (all with same indentation)
         elif (i > 0 and i+1 < len(lines) and
@@ -371,7 +375,7 @@ def process_java_file(input_path, output_path):
                 # Only add empty line if we haven't already added one
                 if not last_added_is_empty:
                     # Add empty line before the comment
-                    processed_lines.append('\t' * curr_tab_count)
+                    processed_lines.append('')
         
         # Existing: Check if current line is a single-line comment followed by if
         elif (i > 0 and i+1 < len(lines) and
@@ -393,7 +397,7 @@ def process_java_file(input_path, output_path):
             if not last_added_is_empty:
                 # Add empty line before the comment
                 tab_count = len(line) - len(line.lstrip('\t'))
-                processed_lines.append('\t' * tab_count)
+                processed_lines.append('')
         
         # Fix comment formatting: ensure space after //
         if stripped.startswith('//') and len(stripped) > 2:
@@ -507,12 +511,12 @@ def process_java_file(input_path, output_path):
                         
                         if should_add:
                             tab_count = len(line) - len(line.lstrip('\t'))
-                            processed_lines.append('\t' * tab_count)
+                            processed_lines.append('')
         
         i += 1
     
-    # Use Windows line endings (CRLF)
-    line_ending = '\r\n'
+    # Preserve the input file's line endings (CRLF or LF)
+    line_ending = '\r\n' if '\r\n' in content else '\n'
     
     # Write with UTF-8 encoding (no BOM)
     with open(output_path, 'w', encoding='utf-8', newline='') as f:

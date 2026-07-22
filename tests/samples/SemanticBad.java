@@ -12,6 +12,7 @@ public class SemanticBad
 				total += order.getTotal();
 			}
 		}
+
 		final double rounded = Math.round(total * 100.0) / 100.0;
 		return rounded;
 	}
@@ -23,6 +24,7 @@ public class SemanticBad
 		{
 			result += order.getId() + ",";
 		}
+
 		return result;
 	}
 
