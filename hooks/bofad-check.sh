@@ -116,6 +116,23 @@ $hits"
 		rm -f "$tmp"
 	fi
 
+	# Java autoboxing patterns via the bundled bofad-boxing.py; output is path:line: RULE: msg, the leading path is stripped so filter_hits can line-scope it in hook mode. Java only, the wrapper rules mean nothing to the other brace languages. Missing script or python degrades to a silent skip, which keeps the bare pre-commit copy-install working.
+	box="$(dirname "$0")/bofad-boxing.py"
+	case "$f" in
+		*.java) ;;
+		*) box="" ;;
+	esac
+	if [ -n "$box" ] && [ -f "$box" ] && command -v python >/dev/null 2>&1
+	then
+		hits=$(python "$box" "$f" 2>/dev/null | awk -v n="${#f}" '{ print substr($0, n + 2) }' | filter_hits | head -n 12)
+		if [ -n "$hits" ]
+		then
+			out="$out
+BOXING (unnecessary box/unbox, see bofad-boxing.py rules):
+$hits"
+		fi
+	fi
+
 	common_checks "$f"
 }
 
