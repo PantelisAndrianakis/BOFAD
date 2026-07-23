@@ -16,7 +16,7 @@ The checklist below is the only scoring criteria. Mechanical style (braces, tabs
 4. **Avoidable allocation in a loop or hot path** - a fresh object per iteration where one instance or a primitive would do.
 5. **If/else-if chain that should be a switch** - the SAME variable compared to constants across 3+ specific branches, a trailing `else` not counting toward the three. Ranges, `&&`, method calls, `!=` or different variables disqualify the finding.
 6. **Switch that should be an if/else** - fewer than 3 specific cases, a trailing `default` not counting toward the three.
-7. **Indirection that only relocates lines** - a single-use constant with an obvious meaning, or a single-caller helper that does not document a step. A single-caller method whose name explains a step stays.
+7. **Indirection that only relocates lines** - a single-use constant with an obvious meaning, or a method with one caller. Prefer the code inline, with a comment carrying the name when it documented a step.
 8. **Rung 1 violations** - an interface with one implementation, a factory for one product, config for a value that never changes, scaffolding for a future nobody asked for.
 9. **New dependency for what the standard library or a few lines already do.**
 10. **Nesting where a guard clause fits** - main logic buried inside an `if` when an early return flattens it.

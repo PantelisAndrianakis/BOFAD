@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "awk -v lite=\"$BOFAD_LITE\" 'NR==1 && /^---$/{fm=1; next} fm{if (/^---$/) fm=0; next} lite!=\"\" && /^## Voice examples/{skip=1} lite!=\"\" && /^## Research/{skip=0} !skip' \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"",
+						"command": "awk 'NR==1 && /^---$/{fm=1; next} fm{if (/^---$/) fm=0; next} {print}' \"${CLAUDE_PLUGIN_ROOT}/skills/bofad/SKILL.md\"",
 						"shell": "bash",
 						"timeout": 5,
 						"statusMessage": "Loading BOFAD..."

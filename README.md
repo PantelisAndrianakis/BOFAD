@@ -14,9 +14,8 @@ It replaces judgment with checkable procedure:
 - **Reasoning discipline** - evidence before assertion, self-refutation before presenting, smallest diff, reference sweeps, status markers (`Verified:`, `UNVERIFIED`, `EDITED-UNVERIFIED`, `NOTED (not done)`) instead of hedge words.
 - **Planning** - numeric triggers for when to plan, clarify-then-brainstorm flow and wargaming the plan with a subagent prompted to refute it.
 - **Character, conversation and communication** - answer first, density over length, own mistakes unprompted without self-abasement, corrections are permanent, disagree when the evidence says so, warm not chummy, no dependence farming, decline with the principle not the mechanics.
-- **Voice examples** - seventeen short exemplar replies carrying the register the rules cannot state: answer first, evidence cited, defaults stated, honest markers, emotional weight acknowledged, plain not-knowing, principled refusal, irreversible cost said once under pressure, corrections applied retroactively, review findings without praise.
 - **Debugging** - reproduce before fixing, differential diagnosis over first match, fix the cause not the symptom, a failing test indicts the code first.
-- **Measured, not guessed** - every rule traces to an observed host-model failure; a fifteen-probe harness keeps the voice testable on any model.
+- **Measured, not guessed** - rules trace to an observed host-model failure or an explicit operator decision; a fifteen-probe harness keeps the voice testable on any model.
 
 The whole thing is [skills/bofad/SKILL.md](skills/bofad/SKILL.md). Read it in five minutes, argue with it forever.
 
@@ -31,9 +30,9 @@ Install as a plugin, then enable it. BOFAD is on in every session and you can to
 /plugin install BOFAD@AnotherDimension
 ```
 
-A `SessionStart` hook injects the ruleset on every session start and a `UserPromptSubmit` hook repeats a one-line digest of the highest-drift rules on every prompt while the plugin is enabled. Disable it in Manage Plugins to turn BOFAD off. Set `BOFAD_LITE=1` in the environment to inject the ruleset without the Voice examples section - all rules intact, roughly a quarter fewer tokens per session.
+A `SessionStart` hook injects the ruleset on every session start and a `UserPromptSubmit` hook repeats a one-line digest of the highest-drift rules on every prompt while the plugin is enabled. Disable it in Manage Plugins to turn BOFAD off.
 
-A `PostToolUse` hook runs `hooks/bofad-check.sh` after every file edit: a mechanical style check (tabs, Allman braces, comment spacing, no `var`, no functional chains, no switch arrows, no nullability annotations, one variable per line, no em dashes, blank-line and trailing-whitespace hygiene) on Java, C# and C/C++ files, plus dash and blank-line hygiene on markdown. In hook mode findings are limited to uncommitted lines, so legacy files never trigger mass-reformat instructions. Violations are fed straight back to the model for immediate self-correction - instruction asks for compliance, the hook measures it and CI (`.github/workflows/bofad-check.yml`) keeps the checker honest against known-good and known-bad samples, pins the Voice examples block append-only, asserts the heading anchors LITE mode splits on and holds SKILL.md under a 40KB size ceiling.
+A `PostToolUse` hook runs `hooks/bofad-check.sh` after every file edit: a mechanical style check (tabs, Allman braces, comment spacing, no `var`, no functional chains, no switch arrows, no nullability annotations, one variable per line, no em dashes, blank-line and trailing-whitespace hygiene) on Java, C# and C/C++ files, plus dash and blank-line hygiene on markdown. In hook mode findings are limited to uncommitted lines, so legacy files never trigger mass-reformat instructions. Violations are fed straight back to the model for immediate self-correction - instruction asks for compliance, the hook measures it and CI (`.github/workflows/bofad-check.yml`) keeps the checker honest against known-good and known-bad samples and holds SKILL.md under a 40KB size ceiling.
 
 A `Stop` hook runs `hooks/bofad-final-check.sh` on each turn's final message: a warn-only scan for the measured drift tells (hedge beside a done claim, em dash, summary section, trailing promise, code-free reply past 250 words). One finding triggers a single self-correction; a loop guard prevents a second pass and any parse failure fails open.
 

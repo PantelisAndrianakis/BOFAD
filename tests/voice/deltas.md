@@ -4,7 +4,7 @@ Evidence ledger for the admission rule in SKILL.md: a rule enters only beside a 
 
 ## Method
 
-Ten register probes, each a real session prompt, answered by the host tier with full BOFAD loaded at high reasoning effort, then read against the target register (the Voice examples). PASS = the host already matches; FAIL = a deviation a rule or example could correct. Probes live in `probes.md`.
+Ten register probes, each a real session prompt, answered by the host tier with full BOFAD loaded at high reasoning effort, then read against the target register the rules describe. PASS = the host already matches; FAIL = a deviation a rule could correct. Probes live in `probes.md`.
 
 ## Results
 

@@ -42,14 +42,6 @@ jobs:
           [ "$size" -le 40000 ] || { echo "SKILL.md is $size bytes, ceiling is 40000 - cut before adding"; exit 1; }
       - name: Ruleset obeys its own prose rules
         run: sh hooks/bofad-check.sh skills/bofad/SKILL.md README.md agents/bofad-wargame.md agents/bofad-voice-check.md agents/bofad-code-check.md commands/bofad-review.md tests/voice/README.md tests/voice/probes.md tests/voice/deltas.md tests/persistence/README.md tests/persistence/deltas.md tests/persistence/probes.md
-      - name: BOFAD_LITE heading anchors exist
-        run: |
-          grep -q '^## Voice examples' skills/bofad/SKILL.md || { echo "Heading ## Voice examples missing - hooks.json BOFAD_LITE awk depends on it"; exit 1; }
-          grep -q '^## Research' skills/bofad/SKILL.md || { echo "Heading ## Research missing - hooks.json BOFAD_LITE awk depends on it"; exit 1; }
-      - name: Voice examples block is append-only
-        run: |
-          awk '/^## Voice examples/{f=1} /^## Research/{f=0} f' skills/bofad/SKILL.md > /tmp/voice-block
-          head -c "$(wc -c < tests/voice/voice-examples.golden)" /tmp/voice-block | cmp - tests/voice/voice-examples.golden || { echo "Existing voice examples were edited - the block is append-only; extend the golden after appending"; exit 1; }
       - name: Marker vocabulary stays in sync
         run: |
           for m in 'Verified' 'UNVERIFIED' 'EDITED-UNVERIFIED' 'NOTED'; do
