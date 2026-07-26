@@ -168,7 +168,9 @@ CONSECUTIVE BLANK LINES (max one) at line(s): $(printf '%s' "$hits" | tr '\n' ' 
 	fi
 
 	# Trailing whitespace; awk interprets backslash escapes in regex where grep bracket expressions treat them as literals.
-	hits=$(awk '/[ \t]+\r?$/ { print NR }' "$f" | filter_hits | head -n 3)
+	# A whitespace-only line is the project's blank-line indentation, and a block-comment continuation
+	# line carries its trailing space by convention. Neither is a finding, so both are skipped here.
+	hits=$(awk '/[^ \t].*[ \t]+\r?$/ && !/^[ \t]*\*/ { print NR }' "$f" | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out
