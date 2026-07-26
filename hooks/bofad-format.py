@@ -515,26 +515,29 @@ def process_java_file(input_path, output_path):
         
         i += 1
     
-    # Restore the project convention: a blank line carries the indentation of the
-    # next non-blank line. The license header block is left exactly as it is.
-    body_start = 0
-    for index, header_line in enumerate(processed_lines):
-        if header_line.strip() == '*/':
-            body_start = index + 1
-            break
-
-    for index in range(body_start, len(processed_lines)):
-        if processed_lines[index].strip():
-            continue
-
-        indent = ''
-        for lookahead in range(index + 1, len(processed_lines)):
-            following = processed_lines[lookahead]
-            if following.strip():
-                indent = following[:len(following) - len(following.lstrip('\t'))]
+    # Some projects indent blank lines to the surrounding code, others leave them bare.
+    # Follow whichever the input already uses, so neither convention gets rewritten.
+    # Where blank lines are indented, each one takes the indentation of the next
+    # non-blank line; the license header block is left exactly as it is.
+    if any(line and not line.strip() for line in lines):
+        body_start = 0
+        for index, header_line in enumerate(processed_lines):
+            if header_line.strip() == '*/':
+                body_start = index + 1
                 break
 
-        processed_lines[index] = indent
+        for index in range(body_start, len(processed_lines)):
+            if processed_lines[index].strip():
+                continue
+
+            indent = ''
+            for lookahead in range(index + 1, len(processed_lines)):
+                following = processed_lines[lookahead]
+                if following.strip():
+                    indent = following[:len(following) - len(following.lstrip('\t'))]
+                    break
+
+            processed_lines[index] = indent
 
     # Preserve the input file's line endings (CRLF or LF)
     line_ending = '\r\n' if '\r\n' in content else '\n'
