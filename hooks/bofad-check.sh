@@ -68,7 +68,7 @@ $hits"
 	if [ -n "$hits" ]
 	then
 		out="$out
-COMMENT WRAP (break at punctuation, continuation starts with two spaces after //):
+COMMENT WRAP (break at punctuation, continuation is // plus one space):
 $hits"
 	fi
 
