@@ -50,6 +50,28 @@ COMMENT SPACING (space required after //):
 $hits"
 	fi
 
+	# Comment wrapped at a column instead of at punctuation; a line comment continued by another line comment ends at ; - , . or : so the break lands on a clause boundary.
+	# Commented-out code is exempt, it ends on whatever the code ended on.
+	hits=$(awk '
+		{ lines[NR] = $0 }
+		END {
+			for (i = 1; i < NR; i++)
+			{
+				cur = lines[i]
+				nxt = lines[i + 1]
+				if (cur !~ /^[ \t]*\/\/ / || nxt !~ /^[ \t]*\/\/ /) { continue }
+				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (cur ~ /@formatter:(on|off)/ || nxt ~ /@formatter:(on|off)/) { continue }
+				print i ":" cur
+			}
+		}' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+COMMENT WRAP (break at punctuation, continuation starts with two spaces after //):
+$hits"
+	fi
+
 	# Local type inference forbidden, var and C++ auto alike; line comments and doc continuation lines are stripped first so prose mentioning the keywords stays legal, string literals still flag - accepted ceiling.
 	hits=$(grep -n '.' "$f" | sed 's|//.*||' | grep -vE '^[0-9]+:[[:space:]]*(\*|/\*)' | grep -E '(^|[^A-Za-z0-9_.])(var|auto)[[:space:]]+[A-Za-z_]' | filter_hits | head -n 3)
 	if [ -n "$hits" ]

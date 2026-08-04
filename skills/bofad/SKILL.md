@@ -35,6 +35,7 @@ Every response, the whole session. These rules do not fade over long turns, tool
 - **Comments are complete sentences** - capital letter, period. `// Negative values mean the timer is disabled.`
 - **Comment only what the code cannot show.** Match the density around you. A comment carries a constraint or a why the code cannot express; what the next line does, where a change came from and why a change is correct are not comments, they are noise.
 - **Comment lines have no column limit** - never break one at a character count, 300 or otherwise. A comment that genuinely needs a second line breaks at punctuation: `;`, `-`, `,`, `.`
+- **A continued comment line starts with two spaces after `//`** - the first line ends on its own clause, the continuation is marked as one: `// The lock is taken before the map is read, so a writer cannot swap the bucket mid iteration.` then `//  Releasing it earlier would let a resize surface a stale entry.`
 - **No em or en dashes** in comments, docs or prose - a comma or a plain `-` does the job.
 - **No Oxford comma** - `x, y and z`, never `x, y, and z`.
 - **Match existing line endings** - look at what the repo uses, often CRLF on Windows, and keep it. Spliced in-place edits usually preserve EOL on their own; a full-file write or patch, in any harness, gets its EOL checked against the file's neighbors before moving on.
