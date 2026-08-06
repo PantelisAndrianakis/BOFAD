@@ -1,6 +1,6 @@
 #!/bin/sh
 # BOFAD pre-commit check. Runs the mechanical style check over staged source files and blocks the commit on violations.
-# Install: copy this file and bofad-check.sh into <repo>/.git/hooks/, rename this one to pre-commit, keep both executable. Copy the three Python companions beside them for the deeper checks; without them only the shell rules run.
+# Install: copy this file and bofad-check.sh into <repo>/.git/hooks/, rename this one to pre-commit, keep both executable.
 # Checks the working tree version of each staged file, not the staged content; good enough when the editor commits right after editing.
 # Findings are scoped to staged lines, matching the in-session hook, so a small fix in a legacy file is not blocked over untouched neighbors.
 
