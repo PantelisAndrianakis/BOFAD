@@ -7,6 +7,9 @@
 # Line numbers to report on, space-separated; empty means the whole file. Set in hook mode from git diff; standalone callers preset it via BOFAD_CHANGED (the pre-commit wrapper does).
 CHANGED="${BOFAD_CHANGED:-}"
 
+# Python interpreter for the companion scripts; modern Linux ships python3 only, Windows ships python. Empty means every Python check silently skips, which keeps the bare copy-install working.
+PYBIN=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+
 # Keeps only hits whose leading line number is in CHANGED; passes everything through when CHANGED is empty.
 filter_hits()
 {
@@ -122,10 +125,10 @@ $hits"
 	case "$f" in
 		*Config.java) fmt="" ;;
 	esac
-	if [ -z "$CHANGED" ] && [ -n "$fmt" ] && [ -f "$fmt" ] && command -v python >/dev/null 2>&1
+	if [ -z "$CHANGED" ] && [ -n "$fmt" ] && [ -f "$fmt" ] && [ -n "$PYBIN" ]
 	then
 		tmp=$(mktemp)
-		if python -c "import sys, importlib.util; spec = importlib.util.spec_from_file_location('fmt', sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.process_java_file(sys.argv[2], sys.argv[3])" "$fmt" "$f" "$tmp" 2>/dev/null
+		if "$PYBIN" -c "import sys, importlib.util; spec = importlib.util.spec_from_file_location('fmt', sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.process_java_file(sys.argv[2], sys.argv[3])" "$fmt" "$f" "$tmp" 2>/dev/null
 		then
 			hits=$(diff "$f" "$tmp" | grep -E '^[0-9]' | head -n 3)
 			if [ -n "$hits" ]
@@ -144,9 +147,9 @@ $hits"
 		*.java) ;;
 		*) box="" ;;
 	esac
-	if [ -n "$box" ] && [ -f "$box" ] && command -v python >/dev/null 2>&1
+	if [ -n "$box" ] && [ -f "$box" ] && [ -n "$PYBIN" ]
 	then
-		hits=$(python "$box" "$f" 2>/dev/null | awk -v n="${#f}" '{ print substr($0, n + 2) }' | filter_hits | head -n 12)
+		hits=$("$PYBIN" "$box" "$f" 2>/dev/null | awk -v n="${#f}" '{ print substr($0, n + 2) }' | filter_hits | head -n 12)
 		if [ -n "$hits" ]
 		then
 			out="$out
@@ -155,7 +158,25 @@ $hits"
 		fi
 	fi
 
+	lint_checks "$f"
 	common_checks "$f"
+}
+
+# Structural rules via the bundled bofad-lint.py: switch shape, missing braces, repeated getters, single-use locals, string concatenation in loops, naming, Oxford comma. Same output contract as the boxing script, so the same strip and filter applies; missing script or python degrades to a silent skip.
+lint_checks()
+{
+	f="$1"
+	lint="$(dirname "$0")/bofad-lint.py"
+	if [ -f "$lint" ] && [ -n "$PYBIN" ]
+	then
+		hits=$("$PYBIN" "$lint" "$f" 2>/dev/null | awk -v n="${#f}" '{ print substr($0, n + 2) }' | filter_hits | head -n 24)
+		if [ -n "$hits" ]
+		then
+			out="$out
+LINT (see bofad-lint.py rules):
+$hits"
+		fi
+	fi
 }
 
 check_prose()
@@ -163,7 +184,8 @@ check_prose()
 	f="$1"
 	out=""
 
-	# Oxford comma check skipped - clause commas make a grep heuristic block-happy; add one if drift returns.
+	# Oxford comma and mixed line endings come from bofad-lint.py; its Python pattern is tight enough where a clause-comma grep was block-happy.
+	lint_checks "$f"
 	common_checks "$f"
 }
 
