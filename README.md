@@ -45,7 +45,7 @@ The plugin also ships three subagents: `bofad-wargame` refutes implementation pl
 Only Claude Code runs the check in-session. Every other agent gets the same enforcement at commit time instead - the checker is plain POSIX sh and git runs it no matter which tool edited the code:
 
 ```sh
-cp hooks/bofad-check.sh hooks/bofad-pre-commit.sh /path/to/repo/.git/hooks/
+cp hooks/bofad-check.sh hooks/bofad-pre-commit.sh hooks/bofad-lint.py hooks/bofad-boxing.py hooks/bofad-format.py /path/to/repo/.git/hooks/
 mv /path/to/repo/.git/hooks/bofad-pre-commit.sh /path/to/repo/.git/hooks/pre-commit
 ```
 
