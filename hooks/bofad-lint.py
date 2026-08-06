@@ -424,16 +424,46 @@ def check_line_rules(clean_lines, depths, raw_lines, is_java, hit):
 				hit("OXFORD COMMA", idx, "no comma before the and/or closing a list")
 
 
+def formatter_off_lines(raw_lines):
+	"""Line numbers inside // @formatter:off .. // @formatter:on regions, markers included.
+
+	Those regions are laid out by hand on purpose, so the line-shape rules do not apply to them.
+	"""
+	off = set()
+	active = False
+	for idx, line in enumerate(raw_lines, 1):
+		stripped = line.strip()
+		if stripped.startswith("//") and "@formatter:off" in stripped:
+			active = True
+			off.add(idx)
+			continue
+
+		if stripped.startswith("//") and "@formatter:on" in stripped:
+			active = False
+			off.add(idx)
+			continue
+
+		if active:
+			off.add(idx)
+
+	return off
+
+
 def check_file(path, raw_bytes):
 	findings = []
+	suppressed = set()
 
 	def hit(rule, idx, msg):
+		if idx in suppressed:
+			return
+
 		findings.append((rule, idx, msg))
 
 	check_mixed_eol(raw_bytes, hit)
 
 	text = raw_bytes.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
 	raw_lines = text.split("\n")
+	suppressed.update(formatter_off_lines(raw_lines))
 
 	if path.endswith(".md"):
 		check_markdown(raw_lines, hit)
@@ -521,6 +551,15 @@ public class T
 \t\t\t\tdoB();
 \t\t\t}
 \t\t}
+\t}
+
+\tvoid handLaidOut()
+\t{
+\t\t// @formatter:off
+\t\tregister(a,
+\t\t\t() -> { first(); second(); },
+\t\t\t() -> { third(); fourth(); });
+\t\t// @formatter:on
 \t}
 }
 
