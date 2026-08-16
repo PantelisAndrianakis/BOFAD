@@ -416,7 +416,7 @@ def check_line_rules(clean_lines, depths, raw_lines, is_java, hit):
 			if RE_HASH_LINK.search(line):
 				hit("BARE LINK", idx, "the {@link #member} form is forbidden, use {@code ...}")
 		m = RE_LOWER_COMMENT.match(line)
-		if m and not line.lstrip().startswith("//  "):
+		if m and not ((idx > 1) and raw_lines[idx - 2].lstrip().startswith("//")):
 			hit("LOWERCASE COMMENT", idx, "comments are complete sentences, start with a capital letter")
 		comment_pos = line.find("//")
 		if comment_pos >= 0 and "://" not in line:
