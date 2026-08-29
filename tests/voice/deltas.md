@@ -59,3 +59,11 @@ Not probed. Two deviations the user caught in a live Java edit, both in code the
 | A one-sentence comment hand-wrapped across two lines at roughly 110 characters. | Already ruled: comment lines have no column limit, and a second line breaks at punctuation, never at a width. | **No admission.** Existing rule, host failure against it. Logged so a repeat reads as a pattern, not a first offense. |
 
 What this wave does not prove: n=1 per deviation, one session, one file, no control run. The comment row is the more interesting of the two, since it says a written rule can sit live in context and still lose to the habit of wrapping prose at a width. If that repeats, the correction is an example or a mechanical check, not a louder rule.
+
+## Wave 4: operator adoption, developer documentation style
+
+Not probed. Operator instruction: fold an industry developer documentation style guide into the Communication section. Entered by the admission rule's operator-decision path, so no failing probe backs these entries; probes can follow if drift shows.
+
+Distilled in: second person, active voice and present tense; condition and location before action, one imperative action per numbered step; one name per concept, abbreviations spelled out at first use; timeless docs (no `currently`, `new`, `soon`); references by name, never by direction; `must`/`can`/`might` word precision; paragraph-level front-loading; intro sentence before lists and tables, parallel items, sentence-case headings; plain-word vocabulary in translation-proof sentences; `simply`, `easily`, `obviously` join the filler ban.
+
+Declined, standing house rules kept over the guide: serial comma (house bans the Oxford comma), em dashes (house bans them) and the guide's blanket ban on figurative language (house allows a metaphor that buys clarity). Operator ratified the declines on 2026-08-29 and set the precedence as a standing rule, entered beside Distill, don't copy: house rules win every conflict with an imported guide.
