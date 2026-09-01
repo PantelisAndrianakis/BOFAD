@@ -2,7 +2,7 @@
 # BOFAD mechanical style check.
 # Hook mode (no arguments): reads Claude Code PostToolUse JSON from stdin, scopes findings to lines changed since the last commit, reports on stderr and exits 2 so the model self-corrects.
 # Standalone mode (file arguments): checks each whole file, reports on stdout and exits 1 on findings; used by the pre-commit wrapper, CI or manually.
-# Code checks run on brace languages where every rule below is safe; prose checks run on markdown. Warn-only in hook mode, the edit itself is never blocked.
+# Code checks run on brace languages where every rule below is safe, Python takes the subset that survives the translation; prose checks run on markdown. Warn-only in hook mode, the edit itself is never blocked.
 
 # Line numbers to report on, space-separated; empty means the whole file. Set in hook mode from git diff; standalone callers preset it via BOFAD_CHANGED (the pre-commit wrapper does).
 CHANGED="${BOFAD_CHANGED:-}"
@@ -162,6 +162,71 @@ $hits"
 	common_checks "$f"
 }
 
+check_python()
+{
+	f="$1"
+	out=""
+
+	# Spaces used for indentation, tabs required; house style outranks PEP 8 here.
+	hits=$(grep -nE '^ +[^ ]' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+SPACE INDENT (tabs required):
+$hits"
+	fi
+
+	# Missing space after the comment marker. The shebang and repeated-hash dividers are exempt, URL schemes are masked first, and a hash inside a string literal still flags - accepted ceiling.
+	hits=$(sed 's|[A-Za-z][A-Za-z0-9+.-]*://|__SCHEME__|g' "$f" | grep -nE '(^|[[:space:]])#[^ #!]' | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+COMMENT SPACING (space required after #):
+$hits"
+	fi
+
+	# Comment wrapped at a column instead of at punctuation; a line comment continued by another line comment ends at ; - , . or : so the break lands on a clause boundary.
+	hits=$(awk '
+		{ lines[NR] = $0 }
+		END {
+			for (i = 1; i < NR; i++)
+			{
+				cur = lines[i]
+				nxt = lines[i + 1]
+				if (cur !~ /^[ \t]*# / || nxt !~ /^[ \t]*# /) { continue }
+				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				print i ":" cur
+			}
+		}' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+COMMENT WRAP (break at punctuation, the continuation is a plain # line):
+$hits"
+	fi
+
+	# Functional collection chains forbidden; a plain loop or one flat comprehension does the job.
+	hits=$(grep -nE '(^|[^A-Za-z0-9_])(map|filter|reduce)\(|\.apply\(' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+FUNCTIONAL CHAIN (traditional loops required):
+$hits"
+	fi
+
+	# One variable per line; chained assignment and tuple targets both bind more than one name.
+	hits=$(grep -nE '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*(,[[:space:]]*[A-Za-z_][A-Za-z0-9_]*)+[[:space:]]*=[^=]|^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=[[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=[^=]' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+MULTI-DECLARATION (one variable per line):
+$hits"
+	fi
+
+	lint_checks "$f"
+	common_checks "$f"
+}
+
 # Structural rules via the bundled bofad-lint.py: switch shape, missing braces, repeated getters, single-use locals, string concatenation in loops, naming, Oxford comma. Same output contract as the boxing script, so the same strip and filter applies; missing script or python degrades to a silent skip.
 lint_checks()
 {
@@ -240,6 +305,7 @@ check_file()
 	[ -f "$f" ] || return 0
 	case "$f" in
 		*.java|*.cs|*.c|*.cpp|*.h|*.hpp|*.ixx) check_code "$f" ;;
+		*.py) check_python "$f" ;;
 		*.md) check_prose "$f" ;;
 		*) return 0 ;;
 	esac

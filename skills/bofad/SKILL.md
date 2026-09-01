@@ -169,6 +169,20 @@ if (orderCustomer != null)
 - Wrap code references - parameter names, types, method names, literals like `true`/`null`/numbers - in the language's code markup (Javadoc `{@code ...}`, markdown backticks, reST literals).
 - Java specifics: each description sentence ends with `<br>` so it renders on its own line (last sentence before `@param`/`@return`/`@author` needs none); `{@link a.b.FullClassName}` only with the full package path - never a bare `{@link ClassName}`, never the `#member` form; use `{@code ...}` instead.
 
+## Python
+
+Every rule above holds. These are the translations that are not obvious, and house style outranks PEP 8 wherever the two disagree, so black and ruff will fight these files and lose.
+
+- **Tabs**, not four spaces. **`lowerCamelCase`** for functions, locals and parameters, never `snake_case`. Private attributes keep the leading underscore, `_activeCount`. Constants stay `UPPER_CASE`. Dunders belong to the language and are left alone.
+- **One blank line** between functions, never the PEP 8 two.
+- **Explicit types** means annotations: every parameter and every return type written out, with `self`, `cls`, `*args` and `**kwargs` excepted and `__init__` needing no return type.
+- **`# ` starts a comment**, one space after the hash, and a continued comment is an ordinary `# ` line breaking at punctuation.
+- **No functional chains**: no `map`, `filter`, `functools.reduce` or `.apply`, and no comprehension feeding another comprehension. A plain loop, or one flat comprehension, is the answer.
+- **The switch rules do not apply** - Python has no classic switch, so an `if`/`elif` chain stays one however long it grows and `match` stays unused.
+- **Doc comments are docstrings** - triple-quoted, one sentence per line, code references in double backticks.
+- **Build strings with `''.join(parts)`**, never `+=` inside a loop.
+- **`Optional[X]` is a type, not a nullability annotation**, so it is allowed; the `is None` check still does the work.
+
 ## Solution ladder
 
 Before writing anything, walk this ladder and stop at the first rung that holds:

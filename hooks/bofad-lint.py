@@ -24,6 +24,11 @@ GETTER_EXCLUSIONS = {"getInstance", "poll", "next", "iterator", "take", "remove"
 # Names allowed to break the UPPER_CASE constant rule.
 CONSTANT_EXCLUSIONS = {"serialVersionUID"}
 
+PY_EXTS = (".py",)
+
+# Zero-arg Python calls that return a fresh value or mutate the receiver; never cached.
+PY_CALL_EXCLUSIONS = {"next", "pop", "popleft", "popitem", "read", "readline", "readlines", "random", "time", "monotonic", "perf_counter", "now", "today", "recv", "acquire", "release", "close", "clear", "reverse", "sort", "copy", "commit", "flush", "get_nowait", "getInstance"}
+
 
 def strip_comments_and_strings(src):
 	# Replace comment/string bodies with spaces, keep newlines so line numbers hold.
@@ -142,6 +147,241 @@ RE_BARE_LINK = re.compile(r"\{@link\s+([A-Za-z]\w*)\s*\}")
 RE_HASH_LINK = re.compile(r"\{@link\s+[^}]*#")
 RE_LOWER_COMMENT = re.compile(r"^\s*// ([a-z][^;(){}=<>:/]*)$")
 RE_LOOP_HEAD = re.compile(r"^\s*(?:\}\s*)?(?:for|while)\s*\(")
+
+RE_PY_DEF = re.compile(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\(")
+RE_PY_DEF_FULL = re.compile(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\((.*)\)[ \t]*(->[^:]+)?:")
+RE_PY_LOOP = re.compile(r"^[ \t]*(?:async[ \t]+)?(?:for|while)\b")
+RE_PY_BRANCH = re.compile(r"^[ \t]*(?:elif\b|else[ \t]*:|except\b|case\b)")
+RE_PY_CALL = re.compile(r"((?:\w+\.)*\w+)\.(\w+)\(\s*\)")
+RE_PY_ASSIGN = re.compile(r"^[ \t]*([A-Za-z_]\w*)[ \t]*(?::[^=]+)?=(?!=)")
+RE_PY_STR_INIT = re.compile(r"^[ \t]*(\w+)[ \t]*(?::[ \t]*str[ \t]*)?=[ \t]*(?:''|\"\")[ \t]*$")
+RE_PY_LOWER_COMMENT = re.compile(r"^[ \t]*# ([a-z][^;(){}=<>:]*)$")
+RE_PY_LITERAL = re.compile(r"^(?:-?\d[\w.]*|''|\"\"|True|False|None|[\[({])")
+
+
+def strip_python_comments_and_strings(src):
+	# Replace comment and string bodies with spaces, keeping newlines and column positions so line numbers and finds hold.
+	# Python has no block comment, so the # form and the four quote forms are the whole job. An f-string's {expression} is blanked with the rest of the literal, so a call hiding in one is invisible to every rule below, accepted ceiling.
+	out = []
+	i = 0
+	n = len(src)
+	while i < n:
+		c = src[i]
+		if c == "#":
+			while (i < n) and (src[i] != "\n"):
+				out.append(" ")
+				i += 1
+			continue
+		if src.startswith('"""', i) or src.startswith("'''", i):
+			quote = src[i:i + 3]
+			out.append("   ")
+			i += 3
+			while i < n:
+				if src.startswith(quote, i):
+					out.append("   ")
+					i += 3
+					break
+				out.append("\n" if src[i] == "\n" else " ")
+				i += 1
+			continue
+		if (c == '"') or (c == "'"):
+			out.append(c)
+			i += 1
+			while i < n:
+				if src[i] == "\\":
+					out.append(" ")
+					i += 1
+					if i < n:
+						out.append("\n" if src[i] == "\n" else " ")
+						i += 1
+					continue
+				if src[i] == c:
+					out.append(c)
+					i += 1
+					break
+				if src[i] == "\n":
+					out.append("\n")
+					i += 1
+					break
+				out.append(" ")
+				i += 1
+			continue
+		out.append(c)
+		i += 1
+	return "".join(out)
+
+
+def indent_width(line):
+	# Visual indent of a line with tabs expanded, so Python blocks compare by depth the way braces do elsewhere.
+	stripped = line.lstrip(" \t")
+	return len(line[:len(line) - len(stripped)].expandtabs(4))
+
+
+def python_bodies(clean_lines):
+	# Index range [start, end) of each def body, header excluded. A nested def stays inside its parent's range; scope-coarse by design, same as the brace scan.
+	bodies = []
+	for idx, line in enumerate(clean_lines):
+		if not RE_PY_DEF.match(line):
+			continue
+		indent = indent_width(line)
+		last = idx
+		for other in range(idx + 1, len(clean_lines)):
+			if not clean_lines[other].strip():
+				continue
+			if indent_width(clean_lines[other]) <= indent:
+				break
+			last = other
+		if last > idx:
+			bodies.append((idx + 1, last + 1))
+	return bodies
+
+
+def python_loop_lines(clean_lines):
+	# Indexes of every line sitting inside a for or while body.
+	inside = set()
+	for idx, line in enumerate(clean_lines):
+		if not RE_PY_LOOP.match(line):
+			continue
+		indent = indent_width(line)
+		for other in range(idx + 1, len(clean_lines)):
+			if not clean_lines[other].strip():
+				continue
+			if indent_width(clean_lines[other]) <= indent:
+				break
+			inside.add(other)
+	return inside
+
+
+def split_params(text):
+	# Top-level comma split, so an annotation like Dict[str, int] stays one parameter.
+	parts = []
+	depth = 0
+	current = ""
+	for c in text:
+		if c in "([{":
+			depth += 1
+		elif c in ")]}":
+			depth -= 1
+		if (c == ",") and (depth == 0):
+			parts.append(current)
+			current = ""
+			continue
+		current += c
+	if current.strip():
+		parts.append(current)
+	return parts
+
+
+def camel_violation(name):
+	# True when a name breaks house lowerCamelCase. Dunders belong to the language and UPPER_CASE constants earn their underscores.
+	if name.startswith("__") or name.endswith("__"):
+		return False
+	core = name.lstrip("_")
+	if core.upper() == core:
+		return False
+	return "_" in core
+
+
+def check_python_scopes(clean_lines, hit):
+	loop_lines = python_loop_lines(clean_lines)
+	for start, end in python_bodies(clean_lines):
+		# Repeated zero-arg calls on the identical receiver; a branch or loop header resets the counts, same reasoning as the brace-language scan.
+		seen = {}
+		flagged = set()
+		for ln in range(start, end):
+			if RE_PY_BRANCH.match(clean_lines[ln]) or RE_PY_LOOP.match(clean_lines[ln]):
+				seen = {}
+			for m in RE_PY_CALL.finditer(clean_lines[ln]):
+				receiver = m.group(1)
+				call = m.group(2)
+				if (call in PY_CALL_EXCLUSIONS) or call.startswith("__") or receiver.endswith(")"):
+					continue
+				key = receiver + "." + call
+				if key in flagged:
+					continue
+				if key in seen:
+					hit("REPEATED CALL", ln + 1, key + "() repeats in this scope, cache it in a local")
+					flagged.add(key)
+				else:
+					seen[key] = ln
+
+		# Single-use locals folded only when the lone read sits on the very next statement.
+		for ln in range(start, end):
+			m = RE_PY_ASSIGN.match(clean_lines[ln])
+			if not m:
+				continue
+			name = m.group(1)
+			reads = []
+			for other in range(ln + 1, end):
+				if re.search(r"\b" + re.escape(name) + r"\b", clean_lines[other]):
+					reads.append(other)
+			if (len(reads) == 1) and (reads[0] == next_code_line(clean_lines, ln + 1)):
+				hit("SINGLE-USE LOCAL", ln + 1, name + " is read once on the next line, fold it into the use site")
+
+		# String grown with += inside a loop; every append reallocates.
+		string_vars = set()
+		for ln in range(start, end):
+			m = RE_PY_STR_INIT.match(clean_lines[ln])
+			if m:
+				string_vars.add(m.group(1))
+			if ln not in loop_lines:
+				continue
+			for name in string_vars:
+				if re.search(r"\b" + re.escape(name) + r"\s*\+=", clean_lines[ln]) or re.search(r"\b" + re.escape(name) + r"\s*=\s*" + re.escape(name) + r"\s*\+", clean_lines[ln]):
+					hit("STRING CONCAT LOOP", ln + 1, name + " concatenates inside a loop, collect the parts and join them")
+
+
+def check_python_lines(clean_lines, raw_lines, hit):
+	for idx, line in enumerate(clean_lines, 1):
+		# Python needs no semicolon, so even one splits a line into two statements.
+		depth = 0
+		semis = 0
+		for c in line:
+			if c in "([{":
+				depth += 1
+			elif c in ")]}":
+				depth -= 1
+			elif (c == ";") and (depth == 0):
+				semis += 1
+		if semis >= 1:
+			hit("MULTI-STATEMENT LINE", idx, "one statement per line, Python needs no semicolon")
+
+		m = RE_PY_DEF_FULL.match(line)
+		if m:
+			name = m.group(1)
+			if camel_violation(name):
+				hit("PY NAMING", idx, name + " is snake_case, house style is lowerCamelCase")
+
+			# Explicit types mean written-out annotations. __init__ is exempt from the return type, its None is not news to anyone.
+			if not m.group(3) and (name != "__init__"):
+				hit("MISSING TYPE HINT", idx, name + " has no return type, write it out")
+			for param in split_params(m.group(2)):
+				param = param.strip()
+				if not param or param.startswith("*") or (param in ("self", "cls")):
+					continue
+				if ":" not in param.split("=")[0]:
+					hit("MISSING TYPE HINT", idx, "parameter " + param.split("=")[0].strip() + " has no type, write it out")
+
+		if indent_width(line) > 0:
+			continue
+		m = RE_PY_ASSIGN.match(line)
+		if not m:
+			continue
+		name = m.group(1)
+		if camel_violation(name):
+			hit("PY NAMING", idx, name + " is snake_case, house style is lowerCamelCase")
+		value = line.split("=", 1)[1].strip()
+		if RE_PY_LITERAL.match(value) and not name.startswith("_") and (name.upper() != name):
+			hit("CONSTANT CASE", idx, name + " is a module-level literal, name it UPPER_CASE")
+
+	for idx, line in enumerate(raw_lines, 1):
+		m = RE_PY_LOWER_COMMENT.match(line)
+		if m and not ((idx > 1) and raw_lines[idx - 2].lstrip().startswith("#")):
+			hit("LOWERCASE COMMENT", idx, "comments are complete sentences, start with a capital letter")
+		comment_pos = line.find("# ")
+		if (comment_pos >= 0) and RE_OXFORD.search(line[comment_pos:]):
+			hit("OXFORD COMMA", idx, "no comma before the and/or closing a list")
+
 
 
 def check_mixed_eol(raw_bytes, hit):
@@ -433,12 +673,12 @@ def formatter_off_lines(raw_lines):
 	active = False
 	for idx, line in enumerate(raw_lines, 1):
 		stripped = line.strip()
-		if stripped.startswith("//") and "@formatter:off" in stripped:
+		if stripped.startswith(("//", "#")) and "@formatter:off" in stripped:
 			active = True
 			off.add(idx)
 			continue
 
-		if stripped.startswith("//") and "@formatter:on" in stripped:
+		if stripped.startswith(("//", "#")) and "@formatter:on" in stripped:
 			active = False
 			off.add(idx)
 			continue
@@ -467,6 +707,11 @@ def check_file(path, raw_bytes):
 
 	if path.endswith(".md"):
 		check_markdown(raw_lines, hit)
+		return findings
+	if path.endswith(PY_EXTS):
+		clean_lines = strip_python_comments_and_strings(text).split("\n")
+		check_python_scopes(clean_lines, hit)
+		check_python_lines(clean_lines, raw_lines, hit)
 		return findings
 	if not path.endswith(CODE_EXTS):
 		return findings
@@ -638,6 +883,38 @@ The `one, two, and three` span stays exempt too.
 """
 
 
+SELFTEST_PY = """\
+maxRetries = 3
+
+def run(order: Order, code: int) -> None:
+\t# lowercase fragment comment
+\t# Retry once, twice, and thrice.
+\tstatus = order.getStatus()
+\tuse(status)
+\ttotal = ""
+\tfor item in items:
+\t\ttotal += item
+\tvalue = 1; other = 2
+\tuse(order.name())
+\tuse(order.name())
+
+def send_now(x) -> None:
+\tuse(x)
+"""
+
+SELFTEST_CLEAN_PY = """\
+MAX_RETRIES = 3
+
+def label(order: Order, code: int) -> int:
+\torderStatus = order.getStatus()
+\tif orderStatus == PAID:
+\t\tuse(orderStatus)
+\tparts: list = []
+\tfor item in items:
+\t\tparts.append(item)
+\treturn code
+"""
+
 def selftest():
 	findings = check_file("selftest.java", SELFTEST_JAVA.encode("utf-8"))
 	rules = [f[0] for f in findings]
@@ -673,6 +950,28 @@ def selftest():
 	md = check_file("selftest.md", SELFTEST_MD.encode("utf-8"))
 	assert [f[0] for f in md] == ["OXFORD COMMA"], "markdown fixture wrong: " + str(md)
 	assert md[0][1] == 3, "OXFORD COMMA expected on line 3, got " + str(md[0][1])
+
+	py = check_file("selftest.py", SELFTEST_PY.encode("utf-8"))
+	py_rules = [f[0] for f in py]
+	py_expected = {
+		"CONSTANT CASE": 1,
+		"LOWERCASE COMMENT": 1,
+		"OXFORD COMMA": 1,
+		"SINGLE-USE LOCAL": 1,
+		"STRING CONCAT LOOP": 1,
+		"MULTI-STATEMENT LINE": 1,
+		"REPEATED CALL": 1,
+		"MISSING TYPE HINT": 1,
+		"PY NAMING": 1,
+	}
+	for rule, want in py_expected.items():
+		got = py_rules.count(rule)
+		assert got == want, "python " + rule + ": expected " + str(want) + " got " + str(got) + " " + str([f for f in py if f[0] == rule])
+	py_unexpected = [f for f in py if f[0] not in py_expected]
+	assert not py_unexpected, "unexpected python findings: " + str(py_unexpected)
+
+	clean_py = check_file("clean.py", SELFTEST_CLEAN_PY.encode("utf-8"))
+	assert not clean_py, "clean python fixture flagged: " + str(clean_py)
 
 	mixed = check_file("mixed.java", b"class A\r\n{\r\n}\n")
 	assert any(f[0] == "MIXED EOL" for f in mixed), "MIXED EOL did not fire"
