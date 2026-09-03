@@ -2,7 +2,7 @@
 # BOFAD mechanical style check.
 # Hook mode (no arguments): reads Claude Code PostToolUse JSON from stdin, scopes findings to lines changed since the last commit, reports on stderr and exits 2 so the model self-corrects.
 # Standalone mode (file arguments): checks each whole file, reports on stdout and exits 1 on findings; used by the pre-commit wrapper, CI or manually.
-# Code checks run on brace languages where every rule below is safe, Python takes the subset that survives the translation; prose checks run on markdown. Warn-only in hook mode, the edit itself is never blocked.
+# Code checks run on brace languages where every rule below is safe, Python and Rust take the subset that survives the translation plus their own rules; prose checks run on markdown. Warn-only in hook mode, the edit itself is never blocked.
 
 # Line numbers to report on, space-separated; empty means the whole file. Set in hook mode from git diff; standalone callers preset it via BOFAD_CHANGED (the pre-commit wrapper does).
 CHANGED="${BOFAD_CHANGED:-}"
@@ -227,6 +227,125 @@ $hits"
 	common_checks "$f"
 }
 
+check_rust()
+{
+	f="$1"
+	out=""
+
+	# Spaces used for indentation, tabs required; block comment continuation lines starting with " *" are exempt.
+	hits=$(grep -nE '^ +[^ *]' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+SPACE INDENT (tabs required):
+$hits"
+	fi
+
+	# Opening brace left at end of a code line, Allman requires it alone on its own line. A single-line closure closes on the same line, so it never ends a line with the brace.
+	hits=$(grep -nE '[^[:space:]][[:space:]]*\{[[:space:]]*$' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+K&R BRACE (Allman required, opening brace on its own line):
+$hits"
+	fi
+
+	# Missing space after the comment marker; the /// and //! doc markers carry their own third character. URL schemes are masked first.
+	hits=$(grep -n '.' "$f" | sed 's|[A-Za-z][A-Za-z0-9+.-]*://|__SCHEME__|g' | grep -E '//[^ /!-]' | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+COMMENT SPACING (space required after //):
+$hits"
+	fi
+
+	# Comment wrapped at a column instead of at punctuation, doc comments included.
+	hits=$(awk '
+		{ lines[NR] = $0 }
+		END {
+			for (i = 1; i < NR; i++)
+			{
+				cur = lines[i]
+				nxt = lines[i + 1]
+				if (cur !~ /^[ \t]*\/\/[\/!]? / || nxt !~ /^[ \t]*\/\/[\/!]? /) { continue }
+				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				print i ":" cur
+			}
+		}' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+COMMENT WRAP (break at punctuation, the continuation is a plain // line):
+$hits"
+	fi
+
+	# Iterator pipelines forbidden, explicit loops show control flow and allocation; map_err on an error chain does not match and stays allowed.
+	hits=$(grep -nE '\.(map|filter|filter_map|flat_map|fold|for_each|any|all|reduce|find_map|zip|take_while|skip_while|scan|partition)\(' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+FUNCTIONAL CHAIN (traditional loops required):
+$hits"
+	fi
+
+	# A for loop borrows with & or &mut, not with an explicit iter() call.
+	hits=$(grep -nE '^[[:space:]]*for[[:space:]].*[[:space:]]in[[:space:]].*\.iter(_mut)?\(\)[[:space:]]*$' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+ITERATOR IN FOR (write for x in &v or &mut v):
+$hits"
+	fi
+
+	# Parameter list continued on the next line; a signature stays on one line however long it gets.
+	hits=$(grep -nE '^[[:space:]]*(pub(\([a-z]+\))?[[:space:]]+)?(const[[:space:]]+)?(async[[:space:]]+)?(unsafe[[:space:]]+)?fn[[:space:]]+[A-Za-z_][A-Za-z0-9_]*(<[^>]*>)?\([^)]*$' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+WRAPPED SIGNATURE (all parameters on one line):
+$hits"
+	fi
+
+	# Condition split across lines, an operator left at the end of a control line or starting the next one.
+	hits=$(grep -nE '^[[:space:]]*(if|else if|while|match)[[:space:]].*(&&|\|\|)[[:space:]]*$|^[[:space:]]*(&&|\|\|)[[:space:]]' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+WRAPPED CONDITION (conditions stay on one line):
+$hits"
+	fi
+
+	# Tuple pattern binding several names; allowed only with the tuple type written out for paired values.
+	hits=$(grep -nE '^[[:space:]]*let[[:space:]]+(mut[[:space:]]+)?\([^)]*\)[[:space:]]*=' "$f" | filter_hits | head -n 3)
+	if [ -n "$hits" ]
+	then
+		out="$out
+MULTI-DECLARATION (one variable per line, a typed tuple only for paired values):
+$hits"
+	fi
+
+	# Blank-line layout drift, same formatter as the brace languages; standalone mode only.
+	fmt="$(dirname "$0")/bofad-format.py"
+	if [ -z "$CHANGED" ] && [ -f "$fmt" ] && [ -n "$PYBIN" ]
+	then
+		tmp=$(mktemp)
+		if "$PYBIN" -c "import sys, importlib.util; spec = importlib.util.spec_from_file_location('fmt', sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m.process_java_file(sys.argv[2], sys.argv[3])" "$fmt" "$f" "$tmp" 2>/dev/null
+		then
+			hits=$(diff "$f" "$tmp" | grep -E '^[0-9]' | head -n 3)
+			if [ -n "$hits" ]
+			then
+				out="$out
+FORMATTER DRIFT (blank-line layout, run hooks/bofad-format.py on this file):
+$hits"
+			fi
+		fi
+		rm -f "$tmp"
+	fi
+
+	lint_checks "$f"
+	common_checks "$f"
+}
+
 # Structural rules via the bundled bofad-lint.py: switch shape, missing braces, repeated getters, single-use locals, string concatenation in loops, naming, Oxford comma. Same output contract as the boxing script, so the same strip and filter applies; missing script or python degrades to a silent skip.
 lint_checks()
 {
@@ -306,6 +425,7 @@ check_file()
 	case "$f" in
 		*.java|*.cs|*.c|*.cpp|*.h|*.hpp|*.ixx) check_code "$f" ;;
 		*.py) check_python "$f" ;;
+		*.rs) check_rust "$f" ;;
 		*.md) check_prose "$f" ;;
 		*) return 0 ;;
 	esac

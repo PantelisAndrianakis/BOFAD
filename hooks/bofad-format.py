@@ -399,8 +399,8 @@ def process_java_file(input_path, output_path):
                 tab_count = len(line) - len(line.lstrip('\t'))
                 processed_lines.append('')
         
-        # Fix comment formatting: ensure space after //
-        if stripped.startswith('//') and len(stripped) > 2:
+        # Fix comment formatting: ensure space after //; the Rust doc markers /// and //! carry their own third character
+        if stripped.startswith('//') and len(stripped) > 2 and stripped[2] not in '/!':
             # Check if there's no space after //
             if stripped[2] != ' ':
                 # Get the indentation of the original line
@@ -551,7 +551,7 @@ def process_java_file(input_path, output_path):
 def process_directory(input_dir, output_dir):
     for root, _, files in os.walk(input_dir):
         for file in files:
-            if file.endswith(('.java', '.cs', '.c', '.cpp', '.h', '.hpp', '.ixx')):
+            if file.endswith(('.java', '.cs', '.c', '.cpp', '.h', '.hpp', '.ixx', '.rs')):
                 # Skip Config.java files
                 if file == 'Config.java':
                     print(f'Skipped: {os.path.join(root, file)} (Config.java files are excluded)')

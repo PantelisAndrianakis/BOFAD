@@ -158,6 +158,19 @@ RE_PY_STR_INIT = re.compile(r"^[ \t]*(\w+)[ \t]*(?::[ \t]*str[ \t]*)?=[ \t]*(?:'
 RE_PY_LOWER_COMMENT = re.compile(r"^[ \t]*# ([a-z][^;(){}=<>:]*)$")
 RE_PY_LITERAL = re.compile(r"^(?:-?\d[\w.]*|''|\"\"|True|False|None|[\[({])")
 
+RUST_EXTS = (".rs",)
+
+# A let binding without a written type; the right-hand side decides whether the omission is obvious.
+RE_RS_LET = re.compile(r"^\s*let\s+(?:mut\s+)?([A-Za-z_]\w*)\s*=\s*(.*)$")
+# Obvious right-hand sides: literals, a PascalCase constructor path or struct literal, Self, a closure, a macro, a std path.
+RE_RS_OBVIOUS = re.compile(r"^(?:-?\d|\"|b\"|r#*\"|'|b'|true\b|false\b|\[|\(|\|\s*|move\s*\||[A-Z]\w*(?:::|\s*\{|\s*\()|Self\b|[A-Za-z_][\w:]*!\s*[\[({]|std::|core::)")
+RE_RS_UNWRAP = re.compile(r"\.(?:unwrap|expect)\(")
+RE_RS_USE = re.compile(r"^(?:pub(?:\([^)]*\))?\s+)?use\s+([A-Za-z_][\w]*)")
+RE_RS_CONST = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:const|static)\s+(?:mut\s+)?([a-z]\w*)\s*:")
+RE_RS_TEST_MARK = re.compile(r"^\s*#\[cfg\(test\)\]")
+RE_RS_MOD = re.compile(r"^\s*(?:pub(?:\([^)]*\))?\s+)?mod\s+([A-Za-z_]\w*)\s*;")
+RE_RS_LOWER_COMMENT = re.compile(r"^\s*//[/!]? ([a-z][^;(){}=<>:/]*)$")
+
 
 def strip_python_comments_and_strings(src):
 	# Replace comment and string bodies with spaces, keeping newlines and column positions so line numbers and finds hold.
@@ -383,6 +396,70 @@ def check_python_lines(clean_lines, raw_lines, hit):
 			hit("OXFORD COMMA", idx, "no comma before the and/or closing a list")
 
 
+
+def rust_use_group(path, local_roots):
+	# Import group of a use path: 1 external crates, 2 the standard library, 3 the crate itself, its own mod declarations included.
+	root = path.split("::")[0]
+	if root in ("std", "core", "alloc"):
+		return 2
+	if (root in ("crate", "super", "self")) or (root in local_roots):
+		return 3
+	return 1
+
+def check_rust_lines(clean_lines, raw_lines, hit):
+	# Everything from the first cfg(test) attribute to the end is test code, where unwrap and expect are fine.
+	test_start = len(clean_lines)
+	local_roots = set()
+	for idx, line in enumerate(clean_lines):
+		if RE_RS_TEST_MARK.match(line) and (test_start == len(clean_lines)):
+			test_start = idx
+		m = RE_RS_MOD.match(line)
+		if m:
+			local_roots.add(m.group(1))
+
+	highest_group = 0
+	ordered = True
+	for idx, line in enumerate(clean_lines, 1):
+		# Two or more statements on one line; semicolons inside parentheses and brackets do not count.
+		depth = 0
+		semis = 0
+		for c in line:
+			if c in "([":
+				depth += 1
+			elif c in ")]":
+				depth -= 1
+			elif (c == ";") and (depth == 0):
+				semis += 1
+		if semis >= 2:
+			hit("MULTI-STATEMENT LINE", idx, "one statement per line")
+
+		m = RE_RS_LET.match(line)
+		if m and not RE_RS_OBVIOUS.match(m.group(2)):
+			hit("TYPE INFERENCE", idx, "let " + m.group(1) + " has no written type and the right-hand side does not show it, write it out")
+
+		if (idx <= test_start) and RE_RS_UNWRAP.search(line):
+			hit("NO UNWRAP", idx, "handle the error with ? or a match, unwrap and expect stay in tests")
+
+		m = RE_RS_CONST.match(line)
+		if m:
+			hit("CONSTANT CASE", idx, m.group(1) + " is a constant, name it UPPER_CASE")
+
+		# Top-level use statements come in three groups: external crates, then std, then the crate itself.
+		m = RE_RS_USE.match(line)
+		if m and ordered:
+			group = rust_use_group(m.group(1), local_roots)
+			if group < highest_group:
+				hit("IMPORT ORDER", idx, "use groups run external crates, then std, then crate and super")
+				ordered = False
+			highest_group = max(highest_group, group)
+
+	for idx, line in enumerate(raw_lines, 1):
+		m = RE_RS_LOWER_COMMENT.match(line)
+		if m and not ((idx > 1) and raw_lines[idx - 2].lstrip().startswith("//")):
+			hit("LOWERCASE COMMENT", idx, "comments are complete sentences, start with a capital letter")
+		comment_pos = line.find("//")
+		if (comment_pos >= 0) and ("://" not in line) and RE_OXFORD.search(line[comment_pos:]):
+			hit("OXFORD COMMA", idx, "no comma before the and/or closing a list")
 
 def check_mixed_eol(raw_bytes, hit):
 	crlf = raw_bytes.count(b"\r\n")
@@ -713,6 +790,10 @@ def check_file(path, raw_bytes):
 		check_python_scopes(clean_lines, hit)
 		check_python_lines(clean_lines, raw_lines, hit)
 		return findings
+	if path.endswith(RUST_EXTS):
+		clean_lines = strip_comments_and_strings(text).split("\n")
+		check_rust_lines(clean_lines, raw_lines, hit)
+		return findings
 	if not path.endswith(CODE_EXTS):
 		return findings
 
@@ -915,6 +996,56 @@ def label(order: Order, code: int) -> int:
 \treturn code
 """
 
+# The cfg(test) attribute is spelled with an escaped hash so the shell comment-spacing grep does not read it as a Python comment.
+SELFTEST_RS = """\
+use crate::package::Package;
+use std::fs;
+
+const max_retries: i32 = 3;
+
+// lowercase fragment comment
+// Retry once, twice, and thrice.
+fn run(order: &Order) -> Result<()>
+{
+\tlet data = get_data();
+\tlet count: usize = order.items.len().max(1);
+\tlet buffer = Vec::<u8>::with_capacity(count);
+\tlet name = String::from("order");
+\tlet first: i32 = 1; let second: i32 = 2;
+\tlet value: i32 = parse(&data).unwrap();
+\tOk(())
+}
+
+\x23[cfg(test)]
+mod tests
+{
+\t#[test]
+\tfn parses()
+\t{
+\t\tassert_eq!(parse("1").unwrap(), 1);
+\t}
+}
+"""
+
+SELFTEST_CLEAN_RS = """\
+use anyhow::Result;
+
+use std::fs;
+
+use crate::package::Package;
+
+/// Reads one package and reports its export count.
+pub fn export_count(path: &str) -> Result<usize>
+{
+\tlet bytes: Vec<u8> = fs::read(path)?;
+\tlet package: Package = Package::parse(&bytes)?;
+\tlet names = Vec::<String>::with_capacity(package.exports.len());
+\tlet total: usize = names.len().max(package.exports.len());
+\tlet keep = |index: usize| -> bool { index < total };
+\tOk(total)
+}
+"""
+
 def selftest():
 	findings = check_file("selftest.java", SELFTEST_JAVA.encode("utf-8"))
 	rules = [f[0] for f in findings]
@@ -972,6 +1103,26 @@ def selftest():
 
 	clean_py = check_file("clean.py", SELFTEST_CLEAN_PY.encode("utf-8"))
 	assert not clean_py, "clean python fixture flagged: " + str(clean_py)
+
+	rs = check_file("selftest.rs", SELFTEST_RS.encode("utf-8"))
+	rs_rules = [f[0] for f in rs]
+	rs_expected = {
+		"IMPORT ORDER": 1,
+		"CONSTANT CASE": 1,
+		"LOWERCASE COMMENT": 1,
+		"OXFORD COMMA": 1,
+		"TYPE INFERENCE": 1,
+		"MULTI-STATEMENT LINE": 1,
+		"NO UNWRAP": 1,
+	}
+	for rule, want in rs_expected.items():
+		got = rs_rules.count(rule)
+		assert got == want, "rust " + rule + ": expected " + str(want) + " got " + str(got) + " " + str([f for f in rs if f[0] == rule])
+	rs_unexpected = [f for f in rs if f[0] not in rs_expected]
+	assert not rs_unexpected, "unexpected rust findings: " + str(rs_unexpected)
+
+	clean_rs = check_file("clean.rs", SELFTEST_CLEAN_RS.encode("utf-8"))
+	assert not clean_rs, "clean rust fixture flagged: " + str(clean_rs)
 
 	mixed = check_file("mixed.java", b"class A\r\n{\r\n}\n")
 	assert any(f[0] == "MIXED EOL" for f in mixed), "MIXED EOL did not fire"

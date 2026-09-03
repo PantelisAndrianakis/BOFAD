@@ -183,6 +183,20 @@ Every rule above holds. These are the translations that are not obvious, and hou
 - **Build strings with `''.join(parts)`**, never `+=` inside a loop.
 - **`Optional[X]` is a type, not a nullability annotation**, so it is allowed; the `is None` check still does the work.
 
+## Rust
+
+Every rule above holds, and `rustfmt` would undo the braces below, so it stays out of the workflow.
+
+- **Allman braces everywhere**: functions, `impl` blocks, `match` and its block arms, `if`/`else`, loops, struct literals that span lines. The one exception is a single-line closure, which opens and closes on the same line.
+- **Explicit types on `let`** unless the right-hand side shows the type by itself: a literal, a `Vec::<u8>::new()` or `String::from()` constructor path, a struct literal, `Self`, a closure or a macro. `let data = get_data()` is forbidden, `let data: Vec<u8> = get_data()` is the form.
+- **Explicit loops, no iterator pipelines**: no `map`, `filter`, `fold`, `for_each` or `collect` chains, and a `for` runs over `&v` or `&mut v`, never over `v.iter()`. Zero-cost combinators like `max`, `unwrap_or` and `clamp` stay, and a linear `map_err` chain on an error path may wrap.
+- **Enums with data over trait objects**; `match` for three or more cases, `if`/`else` below that, and every `match` handles every case.
+- **One line per signature and per condition**, however long: no wrapped parameter lists, no `&&` or `||` left dangling at a line end.
+- **No `unwrap()` or `expect()` outside `#[cfg(test)]`**; propagate with `?` or a `match`, and `anyhow::Result` carries the error with context.
+- **`use` groups in order**: external crates, then `std`, then `crate`, `super` and the file's own `mod` declarations, one blank line between groups.
+- **Comments and doc comments** (`//`, `///`, `//!`) are complete sentences. Constants are `UPPER_CASE`, everything else follows the compiler's naming.
+- **One binding per `let`**; a tuple pattern only for paired values and only with its tuple type written out.
+
 ## Solution ladder
 
 Before writing anything, walk this ladder and stop at the first rung that holds:

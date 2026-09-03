@@ -28,6 +28,14 @@ jobs:
           for rule in 'SPACE INDENT' 'COMMENT SPACING' 'COMMENT WRAP' 'FUNCTIONAL CHAIN' 'MULTI-DECLARATION' 'EM/EN DASH' 'CONSECUTIVE BLANK LINES' 'TRAILING WHITESPACE' 'CONSTANT CASE' 'PY NAMING' 'MISSING TYPE HINT' 'MULTI-STATEMENT LINE' 'LOWERCASE COMMENT' 'OXFORD COMMA' 'REPEATED CALL' 'SINGLE-USE LOCAL' 'STRING CONCAT LOOP'; do
             printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on Bad.py: $rule"; exit 1; }
           done
+      - name: Checker passes the clean Rust sample
+        run: sh hooks/bofad-check.sh tests/samples/Good.rs
+      - name: Checker flags the dirty Rust sample
+        run: |
+          if out=$(sh hooks/bofad-check.sh tests/samples/Bad.rs); then echo "Bad.rs passed - checker broken"; exit 1; fi
+          for rule in 'SPACE INDENT' 'K&R BRACE' 'COMMENT SPACING' 'COMMENT WRAP' 'FUNCTIONAL CHAIN' 'ITERATOR IN FOR' 'WRAPPED SIGNATURE' 'WRAPPED CONDITION' 'MULTI-DECLARATION' 'EM/EN DASH' 'CONSECUTIVE BLANK LINES' 'TRAILING WHITESPACE' 'TYPE INFERENCE' 'NO UNWRAP' 'IMPORT ORDER' 'CONSTANT CASE' 'MULTI-STATEMENT LINE' 'LOWERCASE COMMENT' 'OXFORD COMMA'; do
+            printf '%s' "$out" | grep -qF "$rule" || { echo "Rule not firing on Bad.rs: $rule"; exit 1; }
+          done
       - name: Lint flags the semantic fixture mechanically
         run: |
           if out=$(sh hooks/bofad-check.sh tests/samples/SemanticBad.java); then echo "SemanticBad.java passed - lint broken"; exit 1; fi
