@@ -475,6 +475,20 @@ def check_mixed_eol(raw_bytes, hit):
 		hit("MIXED EOL", idx, "file mixes CRLF and LF line endings, match the file's dominant ending")
 
 
+def check_brace_padding(clean_lines, raw_lines, hit):
+	# A brace block opens and closes tight, so a blank line never hugs one of its braces.
+	# Blankness reads the raw line, the braces read the cleaned one, so a comment or a string
+	# ending in a brace never counts as one.
+	for idx in range(2, len(raw_lines)):
+		if raw_lines[idx - 1].strip():
+			continue
+
+		if clean_lines[idx - 2].rstrip().endswith("{"):
+			hit("BRACE PADDING", idx, "blank line right after an opening brace, delete the line")
+		elif clean_lines[idx].lstrip().startswith("}"):
+			hit("BRACE PADDING", idx, "blank line right before a closing brace, delete the line")
+
+
 def check_markdown(raw_lines, hit):
 	in_fence = False
 	for idx, line in enumerate(raw_lines, 1):
@@ -793,6 +807,7 @@ def check_file(path, raw_bytes):
 	if path.endswith(RUST_EXTS):
 		clean_lines = strip_comments_and_strings(text).split("\n")
 		check_rust_lines(clean_lines, raw_lines, hit)
+		check_brace_padding(clean_lines, raw_lines, hit)
 		return findings
 	if not path.endswith(CODE_EXTS):
 		return findings
@@ -801,6 +816,8 @@ def check_file(path, raw_bytes):
 	clean_text = strip_comments_and_strings(text)
 	clean_lines = clean_text.split("\n")
 	depths = line_depths(clean_lines)
+
+	check_brace_padding(clean_lines, raw_lines, hit)
 
 	check_switches(clean_lines, raw_lines, clean_text, hit)
 	check_missing_braces(clean_lines, hit)
@@ -886,6 +903,13 @@ public class T
 \t\t\t() -> { first(); second(); },
 \t\t\t() -> { third(); fourth(); });
 \t\t// @formatter:on
+\t}
+
+\tvoid padded()
+\t{
+\t
+\t\tuse(1);
+\t
 \t}
 }
 
@@ -1050,6 +1074,7 @@ def selftest():
 	findings = check_file("selftest.java", SELFTEST_JAVA.encode("utf-8"))
 	rules = [f[0] for f in findings]
 	expected = {
+		"BRACE PADDING": 2,
 		"FIELD UNDERSCORE": 2,
 		"CONSTANT CASE": 1,
 		"OBJECT MULTI-DECL": 1,

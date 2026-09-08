@@ -515,6 +515,18 @@ def process_java_file(input_path, output_path):
         
         i += 1
     
+    # A brace block opens and closes tight, so a blank line hugging one of its braces goes.
+    # Runs after the passes above so a blank line one of them added is checked too.
+    tightened = []
+    for index, line in enumerate(processed_lines):
+        if not line.strip() and index > 0 and index + 1 < len(processed_lines):
+            previous = processed_lines[index - 1].rstrip()
+            following = processed_lines[index + 1].lstrip()
+            if previous.endswith('{') or following.startswith('}'):
+                continue
+        tightened.append(line)
+    processed_lines = tightened
+
     # Some projects indent blank lines to the surrounding code, others leave them bare.
     # Follow whichever the input already uses, so neither convention gets rewritten.
     # Where blank lines are indented, each one takes the indentation of the next

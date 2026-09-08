@@ -54,6 +54,7 @@ Add a blank line:
 
 Never add one (glue rules):
 
+- Directly after an opening `{` or directly before a closing `}` - a brace block opens and closes tight. Nested closings are the common offender, a whitespace-only line sitting between two `}` lines. The padding line is deleted, not emptied. On an existing file fix it only inside hunks already being touched, smallest diff outranks style.
 - Before control-flow continuations: `else`, `catch`, `finally`, `case`, `default:`, the `while` of do-while.
 - Inside doc comments or `static {}` initializer blocks - leave untouched.
 - Around formatter on/off marker comments.
