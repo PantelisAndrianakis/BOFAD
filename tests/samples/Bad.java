@@ -25,7 +25,6 @@ public class Bad {
 	/** Doc with the {@link Bad} form. */
 	void moreBad()
 	{
-
 		if (ready) fire();
 		int i = 0; i++;
 		// lowercase fragment comment

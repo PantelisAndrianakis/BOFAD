@@ -34,8 +34,14 @@ Every response, the whole session. These rules do not fade over long turns, tool
 - **One variable per line** - never `int a, b;`.
 - **Comments are complete sentences** - capital letter, period. `// Negative values mean the timer is disabled.`
 - **Comment only what the code cannot show.** Match the density around you. A comment carries a constraint or a why the code cannot express; what the next line does, where a change came from and why a change is correct are not comments, they are noise.
-- **Comment lines have no column limit** - never break one at a character count, 300 or otherwise. A comment that genuinely needs a second line breaks at punctuation: `;`, `-`, `,`, `.`
-- **A continued comment line is an ordinary line comment** - one space after `//`, never two, no marker and no extra indent: the first line ends on its own clause and the next carries on from it: `// The lock is taken before the map is read, so a writer cannot swap the bucket mid iteration.` then `// Releasing it earlier would let a resize surface a stale entry.`
+- **Comment lines have no column limit** - never break one at a character count, 300 or otherwise.
+- **One sentence per line** - a sentence never folds onto the next line; a comment of several sentences puts each on its own line, an ordinary line comment with one space after `//`, never two, no marker and no extra indent: `// The lock is taken before the map is read, so a writer cannot swap the bucket mid iteration.` then `// Releasing it earlier would let a resize surface a stale entry.` A list inside a comment keeps one item per line.
+- **Comment form** in C-family code (C, C++, C#, Java):
+  - Inside a function or method body every comment is `//`, never `/* */`.
+  - A comment trailing code is `code // Text.` with exactly one space before `//`: never `code /* Text. */`, never column-aligned with its neighbors.
+  - Outside functions a whole-line comment of one sentence may stay `/* Text. */`.
+  - A multi-line block comment opens with `/**` alone on its line, every line between starts with ` * `, and `*/` closes alone on its own line.
+  - A comment in the middle of code, on a continued macro line, or the license header opening a file keeps its form.
 - **No em or en dashes** in comments, docs or prose - a comma or a plain `-` does the job.
 - **No Oxford comma** - `x, y and z`, never `x, y, and z`.
 - **Match existing line endings** - look at what the repo uses, often CRLF on Windows, and keep it. Spliced in-place edits usually preserve EOL on their own; a full-file write or patch, in any harness, gets its EOL checked against the file's neighbors before moving on.

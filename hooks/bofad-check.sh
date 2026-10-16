@@ -63,7 +63,8 @@ $hits"
 				cur = lines[i]
 				nxt = lines[i + 1]
 				if (cur !~ /^[ \t]*\/\/ / || nxt !~ /^[ \t]*\/\/ /) { continue }
-				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (cur ~ /[.:?!_][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (nxt ~ /^[ \t]*(\/\/|#) +([-*]|[0-9]+[.)]) /) { continue }
 				if (cur ~ /@formatter:(on|off)/ || nxt ~ /@formatter:(on|off)/) { continue }
 				print i ":" cur
 			}
@@ -71,7 +72,7 @@ $hits"
 	if [ -n "$hits" ]
 	then
 		out="$out
-COMMENT WRAP (break at punctuation, the continuation is a plain // line):
+COMMENT WRAP (one sentence per line, a sentence never folds onto the next comment line):
 $hits"
 	fi
 
@@ -194,14 +195,15 @@ $hits"
 				cur = lines[i]
 				nxt = lines[i + 1]
 				if (cur !~ /^[ \t]*# / || nxt !~ /^[ \t]*# /) { continue }
-				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (cur ~ /[.:?!_][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (nxt ~ /^[ \t]*(\/\/|#) +([-*]|[0-9]+[.)]) /) { continue }
 				print i ":" cur
 			}
 		}' "$f" | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out
-COMMENT WRAP (break at punctuation, the continuation is a plain # line):
+COMMENT WRAP (one sentence per line, a sentence never folds onto the next comment line):
 $hits"
 	fi
 
@@ -268,14 +270,15 @@ $hits"
 				cur = lines[i]
 				nxt = lines[i + 1]
 				if (cur !~ /^[ \t]*\/\/[\/!]? / || nxt !~ /^[ \t]*\/\/[\/!]? /) { continue }
-				if (cur ~ /[;,.:_-][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (cur ~ /[.:?!_][ \t]*$/ || cur ~ /[{}()][ \t]*$/) { continue }
+				if (nxt ~ /^[ \t]*(\/\/|#) +([-*]|[0-9]+[.)]) /) { continue }
 				print i ":" cur
 			}
 		}' "$f" | filter_hits | head -n 3)
 	if [ -n "$hits" ]
 	then
 		out="$out
-COMMENT WRAP (break at punctuation, the continuation is a plain // line):
+COMMENT WRAP (one sentence per line, a sentence never folds onto the next comment line):
 $hits"
 	fi
 

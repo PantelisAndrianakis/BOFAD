@@ -147,6 +147,7 @@ RE_BARE_LINK = re.compile(r"\{@link\s+([A-Za-z]\w*)\s*\}")
 RE_HASH_LINK = re.compile(r"\{@link\s+[^}]*#")
 RE_LOWER_COMMENT = re.compile(r"^\s*// ([a-z][^;(){}=<>:/]*)$")
 RE_LOOP_HEAD = re.compile(r"^\s*(?:\}\s*)?(?:for|while)\s*\(")
+RE_SIGNATURE_END = re.compile(r"\)\s*(?:(?:const|override|final|noexcept)\s*|throws\s+[\w.,\s]+)*$")
 
 RE_PY_DEF = re.compile(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\(")
 RE_PY_DEF_FULL = re.compile(r"^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\((.*)\)[ \t]*(->[^:]+)?:")
@@ -755,6 +756,105 @@ def check_line_rules(clean_lines, depths, raw_lines, is_java, hit):
 				hit("OXFORD COMMA", idx, "no comma before the and/or closing a list")
 
 
+def comment_spans(raw_lines):
+	# Per raw line, the comment that starts on it outside any string or char literal: (column, kind, closes) with kind "//", "/*" or "/**", or None.
+	# A line inside a running block comment reports ("cont", column of its */ or -1).
+	spans = []
+	in_block = False
+	for line in raw_lines:
+		if in_block:
+			end = line.find("*/")
+			spans.append(("cont", end))
+			if end >= 0:
+				in_block = False
+			continue
+		found = None
+		quote = None
+		i = 0
+		while i < len(line):
+			c = line[i]
+			if quote:
+				if c == "\\":
+					i += 2
+					continue
+				if c == quote:
+					quote = None
+			elif c in "\"'":
+				quote = c
+			elif line.startswith("//", i):
+				found = (i, "//", True)
+				break
+			elif line.startswith("/*", i):
+				kind = "/**" if line.startswith("/**", i) and not line.startswith("/**/", i) else "/*"
+				closes = line.find("*/", i + 2) >= 0
+				found = (i, kind, closes)
+				in_block = not closes
+				break
+			i += 1
+		spans.append(found)
+	return spans
+
+
+def function_body_lines(clean_lines):
+	# Per line, whether it starts inside a function or method body: a { whose preceding code ends with a parameter list ) opens one, and every brace nested in a body stays in it.
+	inside = []
+	stack = []
+	prev = ""
+	for line in clean_lines:
+		inside.append(bool(stack) and stack[-1])
+		for i, c in enumerate(line):
+			if c == "{":
+				before = line[:i].strip() or prev
+				stack.append((bool(stack) and stack[-1]) or bool(RE_SIGNATURE_END.search(before)))
+			elif (c == "}") and stack:
+				stack.pop()
+		stripped = line.strip()
+		if stripped:
+			prev = stripped
+	return inside
+
+
+def check_comment_form(clean_lines, raw_lines, hit):
+	# Comment form: // inside bodies, `code // Text.` with one space when trailing code, /** alone and */ alone around a multi-line block.
+	# A comment in the middle of code, on a continued macro line, or the header opening the file keeps its form.
+	inside = function_body_lines(clean_lines)
+	spans = comment_spans(raw_lines)
+	first = next((i for i, l in enumerate(raw_lines) if l.strip()), -1)
+	for idx, line in enumerate(raw_lines, 1):
+		span = spans[idx - 1]
+		if not span:
+			continue
+		if span[0] == "cont":
+			if (span[1] >= 0) and line[:span[1]].strip() and (idx - 1 > first):
+				hit("BLOCK COMMENT FORM", idx, "a multi-line comment closes with */ alone on its line")
+			continue
+		col = span[0]
+		kind = span[1]
+		closes = span[2]
+		code = line[:col]
+		has_code = bool(code.strip())
+		if kind == "//":
+			if has_code and ((not code.endswith(" ")) or code.endswith("  ") or code[:-1].endswith("\t")):
+				hit("TRAILING COMMENT SPACING", idx, "a trailing // gets exactly one space before it, never column alignment")
+			continue
+		if line.rstrip().endswith("\\"):
+			continue
+		if closes:
+			if line[line.find("*/", col + 2) + 2:].strip():
+				continue
+			if has_code:
+				hit("TRAILING BLOCK COMMENT", idx, "a comment trailing code is `code // Text.`, not /* */")
+			elif inside[idx - 1]:
+				hit("BLOCK COMMENT IN BODY", idx, "use // for a comment inside a function body")
+			continue
+		if has_code or (idx - 1 == first):
+			continue
+		if inside[idx - 1]:
+			hit("BLOCK COMMENT IN BODY", idx, "use // lines for a comment inside a function body")
+		elif (kind != "/**") or line[col + 3:].strip():
+			hit("BLOCK COMMENT FORM", idx, "a multi-line comment opens with /** alone on its line")
+
+
 def formatter_off_lines(raw_lines):
 	"""Line numbers inside // @formatter:off .. // @formatter:on regions, markers included.
 
@@ -825,6 +925,7 @@ def check_file(path, raw_bytes):
 		check_switch_candidates(clean_lines, hit)
 		check_scoped_rules(clean_lines, depths, hit)
 	check_line_rules(clean_lines, depths, raw_lines, is_java, hit)
+	check_comment_form(clean_lines, raw_lines, hit)
 	return findings
 
 
@@ -1070,6 +1171,47 @@ pub fn export_count(path: &str) -> Result<usize>
 }
 """
 
+SELFTEST_C = """\
+/*
+ * License header opening the file keeps its form.
+ */
+#include "queue.h"   /* Aligned trailing block. */
+int depth; /* Trailing block. */
+int width;    // Aligned trailing line.
+/* Opener with text
+ * Continued.
+ */
+/**
+ * Closing line with text. */
+
+int count(int n)
+{
+\t/* Block in a body. */
+\tint total = n; // Fine trailing comment.
+\tconst char *text = "/* Not a comment. */";
+\treturn total;
+}
+"""
+
+SELFTEST_CLEAN_C = """\
+/**
+ * A queue of pending jobs.
+ * The worker drains it in arrival order.
+ */
+#include "queue.h" // Job and queue types.
+
+/* One sentence above a declaration. */
+int depth; // Jobs waiting.
+
+int count(int n)
+{
+\t// A comment inside the body.
+\tint total = n; // Fine trailing comment.
+\tconst char *text = "/* Not a comment. */ // Nor this.";
+\treturn total;
+}
+"""
+
 def selftest():
 	findings = check_file("selftest.java", SELFTEST_JAVA.encode("utf-8"))
 	rules = [f[0] for f in findings]
@@ -1151,6 +1293,23 @@ def selftest():
 
 	mixed = check_file("mixed.java", b"class A\r\n{\r\n}\n")
 	assert any(f[0] == "MIXED EOL" for f in mixed), "MIXED EOL did not fire"
+
+	c_findings = check_file("selftest.c", SELFTEST_C.encode("utf-8"))
+	c_rules = [f[0] for f in c_findings]
+	c_expected = {
+		"TRAILING BLOCK COMMENT": 2,
+		"TRAILING COMMENT SPACING": 1,
+		"BLOCK COMMENT FORM": 2,
+		"BLOCK COMMENT IN BODY": 1,
+	}
+	for rule, want in c_expected.items():
+		got = c_rules.count(rule)
+		assert got == want, "c " + rule + ": expected " + str(want) + " got " + str(got) + " " + str([f for f in c_findings if f[0] == rule])
+	c_unexpected = [f for f in c_findings if f[0] not in c_expected]
+	assert not c_unexpected, "unexpected c findings: " + str(c_unexpected)
+
+	clean_c = check_file("clean.c", SELFTEST_CLEAN_C.encode("utf-8"))
+	assert not clean_c, "clean c fixture flagged: " + str(clean_c)
 
 	print("selftest OK, " + str(len(findings)) + " findings as expected")
 
