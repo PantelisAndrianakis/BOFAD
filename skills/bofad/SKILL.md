@@ -40,6 +40,7 @@ Every response, the whole session. These rules do not fade over long turns, tool
   - Inside a function or method body every comment is `//`, never `/* */`.
   - A comment trailing code is `code // Text.` with exactly one space before `//`: never `code /* Text. */`, never column-aligned with its neighbors.
   - Outside functions a whole-line comment of one sentence may stay `/* Text. */`.
+  - Outside functions a comment of more than one line is a block comment, never stacked `//` lines (C# `///` doc comments excepted).
   - A multi-line block comment opens with `/**` alone on its line, every line between starts with ` * `, and `*/` closes alone on its own line.
   - A comment in the middle of code, on a continued macro line, or the license header opening a file keeps its form.
 - **No em or en dashes** in comments, docs or prose - a comma or a plain `-` does the job.

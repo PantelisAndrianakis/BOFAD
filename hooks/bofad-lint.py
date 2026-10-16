@@ -820,8 +820,22 @@ def check_comment_form(clean_lines, raw_lines, hit):
 	inside = function_body_lines(clean_lines)
 	spans = comment_spans(raw_lines)
 	first = next((i for i, l in enumerate(raw_lines) if l.strip()), -1)
-	for idx, line in enumerate(raw_lines, 1):
-		span = spans[idx - 1]
+	run_start = -1
+	run_len = 0
+	for idx, line in enumerate(raw_lines + [""], 1):
+		# Stacked // lines outside a body: two or more prose lines in a row form a multi-line comment, which is a /** block there.
+		# /// doc lines, @formatter markers, commented-out code and the header opening the file keep their form.
+		span = spans[idx - 1] if idx <= len(spans) else None
+		text = line[span[0] + 2:].strip() if span and (span[0] != "cont") and (span[1] == "//") else ""
+		stacked = bool(text) and (not line[:span[0]].strip()) and (not inside[idx - 1]) and (not text.startswith("/")) and ("@formatter" not in text) and (not text.endswith((";", "{", "}")))
+		if stacked:
+			if run_len == 0:
+				run_start = idx
+			run_len += 1
+			continue
+		if (run_len >= 2) and (run_start - 1 != first):
+			hit("STACKED LINE COMMENT", run_start, "a multi-line comment outside a function body is a /** block, not stacked // lines")
+		run_len = 0
 		if not span:
 			continue
 		if span[0] == "cont":
@@ -1183,6 +1197,9 @@ int width;    // Aligned trailing line.
  */
 /**
  * Closing line with text. */
+// Two stacked line comments outside a body.
+// They belong in a block comment.
+// int disabled = 0;
 
 int count(int n)
 {
@@ -1206,6 +1223,7 @@ int depth; // Jobs waiting.
 int count(int n)
 {
 \t// A comment inside the body.
+\t// Stacked line comments are right inside a body.
 \tint total = n; // Fine trailing comment.
 \tconst char *text = "/* Not a comment. */ // Nor this.";
 \treturn total;
@@ -1301,6 +1319,7 @@ def selftest():
 		"TRAILING COMMENT SPACING": 1,
 		"BLOCK COMMENT FORM": 2,
 		"BLOCK COMMENT IN BODY": 1,
+		"STACKED LINE COMMENT": 1,
 	}
 	for rule, want in c_expected.items():
 		got = c_rules.count(rule)
