@@ -869,6 +869,31 @@ def check_comment_form(clean_lines, raw_lines, hit):
 			hit("BLOCK COMMENT FORM", idx, "a multi-line comment opens with /** alone on its line")
 
 
+TABLE_VALUE = re.compile(r"^\s*-?(?:0[xX][0-9a-fA-F]+|\d+)[LlFfDd]?,?\s*$")
+
+
+def check_table_shape(raw_lines, hit):
+	"""Flag a two-dimensional constant table the formatter exploded into one bare number per line.
+
+	Such a table belongs between // @formatter:off and // @formatter:on with one row per line.
+	A row is a { line that opens right after the outer { or after the previous row's },.
+	A flat id list stays one value per line, the formatter's own layout.
+	"""
+	flagged = False
+	for idx in range(1, len(raw_lines) - 2):
+		stripped = raw_lines[idx].strip()
+		if stripped == "};":
+			flagged = False
+			continue
+
+		if flagged or (stripped != "{") or (raw_lines[idx - 1].strip() not in ("{", "},")):
+			continue
+
+		if TABLE_VALUE.match(raw_lines[idx + 1]) and TABLE_VALUE.match(raw_lines[idx + 2]):
+			flagged = True
+			hit("TABLE ONE PER LINE", idx + 1, "numeric table rows laid out one value per line, wrap the table in // @formatter:off and keep one row per line")
+
+
 def formatter_off_lines(raw_lines):
 	"""Line numbers inside // @formatter:off .. // @formatter:on regions, markers included.
 
@@ -938,6 +963,7 @@ def check_file(path, raw_bytes):
 	if is_java:
 		check_switch_candidates(clean_lines, hit)
 		check_scoped_rules(clean_lines, depths, hit)
+		check_table_shape(raw_lines, hit)
 	check_line_rules(clean_lines, depths, raw_lines, is_java, hit)
 	check_comment_form(clean_lines, raw_lines, hit)
 	return findings
@@ -1026,6 +1052,21 @@ public class T
 \t\tuse(1);
 \t
 \t}
+}
+
+class Table
+{
+\tprivate static final int[][] LINES =
+\t{
+\t\t{
+\t\t\t1803081,
+\t\t\t1803082,
+\t\t},
+\t\t{
+\t\t\t1803083,
+\t\t\t1803084,
+\t\t},
+\t};
 }
 
 interface IThing
@@ -1253,6 +1294,7 @@ def selftest():
 		"SWITCH CASE BRACES": 1,
 		"SWITCH BREAK": 1,
 		"INTERFACE I PREFIX": 1,
+		"TABLE ONE PER LINE": 1,
 	}
 	for rule, want in expected.items():
 		got = rules.count(rule)

@@ -12,10 +12,10 @@ public class SemanticGood
 				total += order.getTotal();
 			}
 		}
-
+		
 		return Math.round(total * 100.0) / 100.0;
 	}
-
+	
 	public String describe(Customer customer)
 	{
 		final StringBuilder result = new StringBuilder();
@@ -23,10 +23,10 @@ public class SemanticGood
 		{
 			result.append(order.getId()).append(',');
 		}
-
+		
 		return result.toString();
 	}
-
+	
 	public String label(int code)
 	{
 		switch (code)

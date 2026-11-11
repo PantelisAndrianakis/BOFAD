@@ -517,9 +517,9 @@ def process_java_file(input_path, output_path):
     
     # Some projects indent blank lines to the surrounding code, others leave them bare.
     # Follow whichever the input already uses, so neither convention gets rewritten.
-    # Where blank lines are indented, each one takes the indentation of the next
-    # non-blank line; the license header block is left exactly as it is.
-    if any(line and not line.strip() for line in lines):
+    # Each blank line takes the indentation of the next non-blank line, always in Java (the Eclipse layout) and elsewhere where the file already indents them.
+    # The license header block is left exactly as it is.
+    if input_path.endswith('.java') or any(line and not line.strip() for line in lines):
         body_start = 0
         for index, header_line in enumerate(processed_lines):
             if header_line.strip() == '*/':

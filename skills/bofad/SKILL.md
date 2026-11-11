@@ -30,8 +30,9 @@ Every response, the whole session. These rules do not fade over long turns, tool
 - **Allman braces** - the opening `{` gets its own line, always, no exceptions. Single-statement bodies still get braces.
 - **Tabs for indentation**, never spaces. Continuation lines get one extra tab.
 - **Single-line code, no wrapping** - conditions, method signatures and builder chains stay on one line however long they grow. Keep them short the honest way: fewer conditions, smaller expressions, extracted locals. A line too long to read is a design problem, and you fix the code, not the line break.
-- **One blank line** between methods. No trailing spaces.
+- **One blank line** between methods. No trailing spaces, except that in Java a blank line carries the indentation of the next code line, the Eclipse layout, which the bundled formatter restores.
 - **One variable per line** - never `int a, b;`.
+- **Constant tables stay dense** - a two-dimensional table of ids or coordinates sits between `// @formatter:off` and `// @formatter:on`, one row per line (`{1803081, 1803082, 1803083},`), so the formatter cannot explode it one value per line. A flat id list keeps the formatter's own one value per line layout.
 - **Comments are complete sentences** - capital letter, period. `// Negative values mean the timer is disabled.`
 - **Comment only what the code cannot show.** Match the density around you. A comment carries a constraint or a why the code cannot express; what the next line does, where a change came from and why a change is correct are not comments, they are noise.
 - **Comment lines have no column limit** - never break one at a character count, 300 or otherwise.
@@ -305,7 +306,7 @@ Numeric triggers - fire mechanically, no judgment call:
 | Changed any signature/enum/config key/XML attribute | Reference sweep (see above) |
 | Bug report names a location | Treat as hypothesis - trace evidence to `file:line` before editing |
 | About to claim done/fixed/works | Attach fresh command output or mark `EDITED-UNVERIFIED` |
-| Code task finished touching 3+ files or loops/collections/branching logic | Run the `bofad-code-check` agent on the diff; no such agent in the harness → walk its checklist yourself as an explicit step |
+| Code task finished touching 3+ files or loops/collections/branching logic | Run both review layers on every file the task changed (see Refactoring and review thinking); no `bofad-code-check` agent in the harness → walk its checklist yourself as an explicit step |
 
 - **Clarify before designing.** Request underspecified in a way that changes the design? Ask 2-3 sharp questions first - one decision per question, with a recommended default. Everything else: pick the sensible default, state it in one line, keep moving. Ask only decisions that genuinely belong to the user (taste, scope, naming, risk tolerance); never ask what the code can answer.
 - **Brainstorm before speccing.** For real design work, generate 2-3 genuinely different approaches, pick one and say in one sentence why the others lost. No option theater - if one approach is obviously right, skip straight to it and say so.
@@ -320,3 +321,4 @@ Numeric triggers - fire mechanically, no judgment call:
 - **No silent behavior changes.** A perf refactor must be byte-identical in semantics - no sneaking in `Locale.ROOT`, extra null checks, `HashMap` → `LinkedHashMap` or changed capacities. Each behavioral change is its own decision; diff the behavior, not just the code.
 - **Never remove code without proof.** Public API may be called from script/data/config directories, reflection or sibling projects sharing the codebase - a grep of the main source tree alone proves nothing. Grep the whole workspace including scripts and data; if external usage can't be checked, assume live. Present dead-code findings as questions with the search scope shown, never as done deals. Internal structure changes are fine; deleting public surface is not.
 - After mass edits or subagent propagation, grep for regressions before claiming done (e.g. `\t}}` brace damage, import-order drift).
+- **A review is never partial.** Its scope is every file the task changed, taken from `git status` or `svn status` of each repository touched, never from memory of what was written: script, sed and regex edits count, and so do the callers of anything deleted. Copies identical across projects are reviewed once per content hash, with the group named. The report states files reviewed against files changed, and a gap is not clean.

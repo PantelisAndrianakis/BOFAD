@@ -67,3 +67,13 @@ Not probed. Operator instruction: fold an industry developer documentation style
 Distilled in: second person, active voice and present tense; condition and location before action, one imperative action per numbered step; one name per concept, abbreviations spelled out at first use; timeless docs (no `currently`, `new`, `soon`); references by name, never by direction; `must`/`can`/`might` word precision; paragraph-level front-loading; intro sentence before lists and tables, parallel items, sentence-case headings; plain-word vocabulary in translation-proof sentences; `simply`, `easily`, `obviously` join the filler ban.
 
 Declined, standing house rules kept over the guide: serial comma (house bans the Oxford comma), em dashes (house bans them) and the guide's blanket ban on figurative language (house allows a metaphor that buys clarity). Operator ratified the declines and set the precedence as a standing rule, entered beside Distill, don't copy: house rules win every conflict with an imported guide.
+
+## Wave 5: review scope and Java table shape, observed in session
+
+Not probed. Three deviations the operator caught across one long multi-project session, each with full BOFAD in context.
+
+| Deviation | Rule state | Outcome |
+|---|---|---|
+| Review run on the files just written while files edited by script in the same task (quest restructure, entry script, a comment fix) went unchecked, reported as clean. Repeated after an explicit "run both layers" correction. | The review command took its paths as given and the checklist trigger said "the diff" without naming its source. | **Admitted.** "A review is never partial" enters Refactoring and review thinking; the review command reads the VCS status before reporting and states reviewed against changed. |
+| Two-dimensional dialogue tables left as the formatter exploded them, 108 ids one per line. | Uncovered, only the blank-line glue rule mentioned formatter markers. | **Admitted.** "Constant tables stay dense" enters Formatting, backed by the `TABLE ONE PER LINE` lint rule, which flags rows only, never flat id lists. |
+| Java written with bare blank lines where the codebase indents every blank line to the next code line (3648 of 3648 sampled). | The formatter re-indented blank lines only when the file already had one indented. | **Admitted.** The formatter indents blank lines in every Java file, and the Formatting rule names the Java exception to "no trailing spaces". |

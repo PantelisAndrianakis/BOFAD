@@ -12,7 +12,7 @@ public class Good
 		// Timers reset at midnight.
 		return 7;
 	}
-
+	
 	/**
 	 * Guards checker false positives; the var keyword in prose must stay legal.<br>
 	 * See https://example.com/checker for background.<br>
