@@ -870,14 +870,17 @@ def check_comment_form(clean_lines, raw_lines, hit):
 
 
 TABLE_VALUE = re.compile(r"^\s*-?(?:0[xX][0-9a-fA-F]+|\d+)[LlFfDd]?,?\s*$")
+TABLE_ROW = re.compile(r"^\s*\{\s*-?\d+(?:\s*,\s*-?\d+)+\s*\},?\s*$")
 
 
 def check_table_shape(raw_lines, hit):
-	"""Flag a two-dimensional constant table the formatter exploded into one bare number per line.
+	"""Flag a two-dimensional constant table outside // @formatter:off and // @formatter:on.
 
-	Such a table belongs between // @formatter:off and // @formatter:on with one row per line.
-	A row is a { line that opens right after the outer { or after the previous row's },.
+	Exploded rows, one bare number per line, are the formatter's damage already done.
+	Compact rows, {1, 2, 3}, on one line, are the damage the next format pass will do.
+	A row of the exploded kind is a { line right after the outer { or after the previous row's },.
 	A flat id list stays one value per line, the formatter's own layout.
+	Lines inside formatter markers never reach hit, the caller suppresses them.
 	"""
 	flagged = False
 	for idx in range(1, len(raw_lines) - 2):
@@ -886,10 +889,15 @@ def check_table_shape(raw_lines, hit):
 			flagged = False
 			continue
 
-		if flagged or (stripped != "{") or (raw_lines[idx - 1].strip() not in ("{", "},")):
+		if flagged:
 			continue
 
-		if TABLE_VALUE.match(raw_lines[idx + 1]) and TABLE_VALUE.match(raw_lines[idx + 2]):
+		if TABLE_ROW.match(raw_lines[idx]):
+			flagged = True
+			hit("TABLE FORMATTER OFF", idx + 1, "numeric table rows outside // @formatter:off, the formatter will explode them, wrap the table in the markers")
+			continue
+
+		if (stripped == "{") and (raw_lines[idx - 1].strip() in ("{", "},")) and TABLE_VALUE.match(raw_lines[idx + 1]) and TABLE_VALUE.match(raw_lines[idx + 2]):
 			flagged = True
 			hit("TABLE ONE PER LINE", idx + 1, "numeric table rows laid out one value per line, wrap the table in // @formatter:off and keep one row per line")
 
@@ -1067,6 +1075,11 @@ class Table
 \t\t\t1803084,
 \t\t},
 \t};
+\tprivate static final int[][] ROWS =
+\t{
+\t\t{1, 208179, -87113},
+\t\t{2, 209055, -87113},
+\t};
 }
 
 interface IThing
@@ -1079,6 +1092,13 @@ public class Clean
 {
 \tprivate final int _count;
 \tprivate static final int MAX_RETRIES = 3;
+\t// @formatter:off
+\tprivate static final int[][] ROWS =
+\t{
+\t\t{1, 208179, -87113},
+\t\t{2, 209055, -87113},
+\t};
+\t// @formatter:on
 
 \tpublic int label(int code)
 \t{
@@ -1295,6 +1315,7 @@ def selftest():
 		"SWITCH BREAK": 1,
 		"INTERFACE I PREFIX": 1,
 		"TABLE ONE PER LINE": 1,
+		"TABLE FORMATTER OFF": 1,
 	}
 	for rule, want in expected.items():
 		got = rules.count(rule)
