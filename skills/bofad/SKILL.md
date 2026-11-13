@@ -70,6 +70,7 @@ Never add one (glue rules):
 - Inside data tables: consecutive literal/ID rows ending with `,` stay dense.
 - Between a `}` and a continuing builder chain (`.append(...)`).
 - In tight tails like `}` + `return;` + `}`.
+- Between a local and the `if` that reads it - the local sits directly on top of the `if` and the comment announcing the step goes above the local: `// Why.` then `final long now = System.currentTimeMillis();` then `if (now > _deadline)`.
 
 Wrong:
 

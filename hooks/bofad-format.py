@@ -1,4 +1,5 @@
 import os
+import re
 
 def is_control_structure(line):
     """Check if line starts with a control structure keyword."""
@@ -91,6 +92,62 @@ def is_inside_array_context(lines, current_index):
     
     return False
 
+LOCAL_DECLARATION = re.compile(r'^(?:final\s+)?[A-Za-z_][\w.<>\[\]?, ]*\s+([A-Za-z_]\w*)\s*=[^=].*;$')
+
+def glue_locals_to_if(lines):
+    """Pull locals declared for an if down onto it, with the comment announcing the step above them."""
+    # Wrong: local, blank line, comment, if. Right: comment, local, if.
+    # Only single-line declarations at the if's indent move, and the last one must be read by the if condition.
+    result = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        indent = line[:len(line) - len(line.lstrip('\t'))]
+        start = i
+        names = []
+        while i < len(lines):
+            candidate = lines[i]
+            stripped = candidate.strip()
+            match = LOCAL_DECLARATION.match(stripped)
+            if not match or candidate[:len(candidate) - len(candidate.lstrip('\t'))] != indent or stripped.startswith('return '):
+                break
+            names.append(match.group(1))
+            i += 1
+
+        if not names:
+            result.append(line)
+            i += 1
+            continue
+
+        previous = lines[start - 1].strip() if start > 0 else ''
+        if previous and not previous.endswith((';', '{', '}')):
+            result.extend(lines[start:i])
+            continue
+
+        blank = i
+        while blank < len(lines) and lines[blank].strip() == '':
+            blank += 1
+
+        comment_end = blank
+        while comment_end < len(lines) and lines[comment_end].strip().startswith('//') and lines[comment_end].startswith(indent) and not lines[comment_end].startswith(indent + '\t'):
+            comment_end += 1
+
+        condition = ''
+        if comment_end < len(lines) and lines[comment_end].startswith(indent + 'if ('):
+            for scan in range(comment_end, len(lines)):
+                if lines[scan].strip() == '{':
+                    break
+                condition += ' ' + lines[scan]
+
+        if blank == i or not condition or not re.search(r'\b' + re.escape(names[-1]) + r'\b', condition):
+            result.extend(lines[start:i])
+            continue
+
+        result.extend(lines[blank:comment_end])
+        result.extend(lines[start:i])
+        i = comment_end
+    return result
+
 def process_java_file(input_path, output_path):
     try:
         with open(input_path, 'r', encoding='utf-8', newline='') as f:
@@ -99,7 +156,7 @@ def process_java_file(input_path, output_path):
         with open(input_path, 'r', encoding='latin-1', newline='') as f:
             content = f.read()
     
-    lines = content.splitlines()
+    lines = glue_locals_to_if(content.splitlines())
     processed_lines = []
     in_javadoc = False
     in_static_block = False
